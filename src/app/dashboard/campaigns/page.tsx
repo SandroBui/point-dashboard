@@ -227,7 +227,7 @@ export default function CampaignsPage() {
       </Card>
 
       <Card>
-        <CardHeader className="flex-row items-center justify-between space-y-0">
+        <CardHeader className="flex justify-between items-center gap-1">
           <div className="space-y-1">
             <CardTitle className="text-sm font-semibold">
               Total {rows.length} campaigns
@@ -248,7 +248,7 @@ export default function CampaignsPage() {
           </div>
         </CardHeader>
         <CardContent className="pt-0">
-          <Table className="min-w-[1050px]">
+          <Table className="min-w-262.5">
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[340px]">Campaign</TableHead>
