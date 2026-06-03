@@ -1,6 +1,6 @@
 "use server";
 
-import { createCampaign, inactiveCampaign } from "@/lib/campaigns";
+import { createCampaign, inactiveCampaign } from "@/api/campaigns";
 import { revalidatePath } from "next/cache";
 
 export type ActionState = {

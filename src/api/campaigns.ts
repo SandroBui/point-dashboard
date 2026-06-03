@@ -1,5 +1,5 @@
 import type { Campaign, CreateCampaignInput } from "@/types/campaign";
-import apiFetch from "./apiFetch";
+import apiFetch from "../lib/apiFetch";
 
 
 export async function listCampaigns(): Promise<Campaign[]> {
