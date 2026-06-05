@@ -17,10 +17,6 @@ export default function useGetCampaigns() {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(ROW_PER_PAGE[1]);
 
-  const [search, setSearch] = useState("");
-  const [selectedPartner, setSelectedPartner] = useState<string>("all");
-  const [selectedStatus, setSelectedStatus] = useState<string>("all");
-  const [selectedVault, setSelectedVault] = useState<string>("all");
   const [appliedFilters, setAppliedFilters] = useState<CampaignFilters>({});
 
   const { data: listPartners, isLoading: isLoadingGetPartners } = useSWR(
@@ -73,7 +69,17 @@ export default function useGetCampaigns() {
     setPage(1);
   };
 
-  const applyFilters = () => {
+  const applyFilters = ({
+    selectedPartner,
+    selectedStatus,
+    selectedVault,
+    search,
+  }: {
+    selectedPartner: string;
+    selectedStatus: string;
+    selectedVault: string;
+    search: string;
+  }) => {
     const normalizedPartner =
       selectedPartner && selectedPartner !== "all"
         ? selectedPartner
@@ -94,10 +100,6 @@ export default function useGetCampaigns() {
   };
 
   const resetFilters = () => {
-    setSearch("");
-    setSelectedPartner("all");
-    setSelectedStatus("all");
-    setSelectedVault("all");
     setAppliedFilters({});
     setPage(1);
   };
@@ -109,12 +111,6 @@ export default function useGetCampaigns() {
     resetFilters,
     page,
     limit,
-    search,
-    setSearch,
-    selectedPartner,
-    setSelectedPartner,
-    selectedStatus,
-    setSelectedStatus,
     appliedFilters,
     listPartners,
     campaigns,
@@ -123,7 +119,5 @@ export default function useGetCampaigns() {
     handlePreviousPage,
     isLoadingFilter: isLoadingGetPartners || isLoadingGetVaults,
     listVaults: listVaults?.data || [],
-    selectedVault,
-    setSelectedVault,
   };
 }

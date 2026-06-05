@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/select";
 import { CampaignStatus } from "@/constants/campaign";
 import { PartnersItem } from "@/types/campaign";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { VaultDataV2 } from "@/types/vaults";
 
@@ -34,15 +34,17 @@ interface FilterCampaignProps {
   isApplying?: boolean;
   partnersSelect: PartnersItem[];
   vaultsSelect: VaultDataV2[];
-  selectedPartner: string;
-  selectedStatus: string;
-  selectedVault: string;
-  setSelectedPartner: (value: string) => void;
-  setSelectedStatus: (value: string) => void;
-  setSelectedVault: (value: string) => void;
-  search: string;
-  setSearch: (value: string) => void;
-  onApply: () => void;
+  onApply: ({
+    selectedPartner,
+    selectedStatus,
+    selectedVault,
+    search,
+  }: {
+    selectedPartner: string;
+    selectedStatus: string;
+    selectedVault: string;
+    search: string;
+  }) => void;
   onReset: () => void;
 }
 
@@ -50,18 +52,15 @@ export const FilterCampaign = ({
   isLoading,
   isApplying,
   partnersSelect,
-  selectedPartner,
-  selectedStatus,
-  setSelectedPartner,
-  setSelectedStatus,
-  search,
-  setSearch,
   onApply,
   onReset,
   vaultsSelect,
-  selectedVault,
-  setSelectedVault,
 }: FilterCampaignProps) => {
+  const [search, setSearch] = useState("");
+  const [selectedPartner, setSelectedPartner] = useState<string>("all");
+  const [selectedStatus, setSelectedStatus] = useState<string>("all");
+  const [selectedVault, setSelectedVault] = useState<string>("all");
+
   const itemsSelectPartner = useMemo(() => {
     return (
       partnersSelect?.map((item) => ({
@@ -80,6 +79,23 @@ export const FilterCampaign = ({
     );
   }, [vaultsSelect]);
 
+  const handleApply = () => {
+    onApply({
+      selectedPartner,
+      selectedStatus,
+      selectedVault,
+      search,
+    });
+  };
+
+  const handleReset = () => {
+    setSearch("");
+    setSelectedPartner("all");
+    setSelectedStatus("all");
+    setSelectedVault("all");
+    onReset();
+  };
+
   return (
     <Card>
       <CardHeader className="pb-0">
@@ -93,7 +109,7 @@ export const FilterCampaign = ({
                 onKeyDown={(e) => {
                   if (e.key !== "Enter") return;
                   e.preventDefault();
-                  onApply();
+                  handleApply();
                 }}
                 placeholder="Search..."
               />
@@ -104,7 +120,11 @@ export const FilterCampaign = ({
           </Field>
 
           <div className="flex flex-wrap items-center justify-end gap-2">
-            <Button variant="outline" disabled={isApplying} onClick={onApply}>
+            <Button
+              variant="outline"
+              disabled={isApplying}
+              onClick={handleApply}
+            >
               {isApplying ? (
                 <Loader2 className="size-4 animate-spin" />
               ) : (
@@ -112,7 +132,7 @@ export const FilterCampaign = ({
               )}
               Filters
             </Button>
-            <Button variant="ghost" disabled={isApplying} onClick={onReset}>
+            <Button variant="ghost" disabled={isApplying} onClick={handleReset}>
               <RefreshCw className="size-4" />
               Reset
             </Button>

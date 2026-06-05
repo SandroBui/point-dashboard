@@ -85,16 +85,8 @@ export default function CampaignsPage() {
     isLoadingGetCampaigns,
     listPartners,
     isLoadingFilter,
-    selectedPartner,
-    selectedStatus,
-    setSelectedPartner,
-    setSelectedStatus,
-    search,
-    setSearch,
     applyFilters,
     resetFilters,
-    selectedVault,
-    setSelectedVault,
     listVaults,
   } = useGetCampaigns();
 
@@ -127,17 +119,9 @@ export default function CampaignsPage() {
         isLoading={isLoadingFilter}
         isApplying={isLoadingGetCampaigns}
         partnersSelect={listPartners as PartnersItem[]}
-        selectedPartner={selectedPartner}
-        selectedStatus={selectedStatus}
-        search={search}
-        setSearch={setSearch}
-        setSelectedPartner={setSelectedPartner}
-        setSelectedStatus={setSelectedStatus}
         onApply={applyFilters}
         onReset={resetFilters}
         vaultsSelect={(listVaults ?? []) as VaultDataV2[]}
-        selectedVault={selectedVault}
-        setSelectedVault={setSelectedVault}
       />
       <Card>
         <CardHeader className="flex justify-between items-center gap-1">
