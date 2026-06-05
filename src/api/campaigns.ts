@@ -14,6 +14,8 @@ export const getCampaigns = async (
   search?: string,
   status?: string,
   vaultId?: string,
+  dateFrom?: string,
+  dateTo?: string,
 ) =>
   await apiFetch<CampaignsResponse>(
     `/api/v1/admin/point-campaigns?${qs.stringify({
@@ -23,6 +25,8 @@ export const getCampaigns = async (
       'filter[name]': search,
       'filter[status]': status,
       'filter[vault_id]': vaultId,
+      'filter[from_time]': dateFrom,
+      'filter[to_time]': dateTo,
     })}`,
   );
 

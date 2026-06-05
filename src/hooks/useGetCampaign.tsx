@@ -11,6 +11,8 @@ type CampaignFilters = {
   search?: string;
   status?: string;
   vaultId?: string;
+  dateFrom?: string;
+  dateTo?: string;
 };
 
 export default function useGetCampaigns() {
@@ -38,6 +40,8 @@ export default function useGetCampaigns() {
       appliedFilters.search,
       appliedFilters.status,
       appliedFilters.vaultId,
+      appliedFilters.dateFrom,
+      appliedFilters.dateTo,
     ],
     () =>
       getCampaigns(
@@ -47,6 +51,8 @@ export default function useGetCampaigns() {
         appliedFilters.search,
         appliedFilters.status,
         appliedFilters.vaultId,
+        appliedFilters.dateFrom,
+        appliedFilters.dateTo,
       ),
   );
 
@@ -74,11 +80,15 @@ export default function useGetCampaigns() {
     selectedStatus,
     selectedVault,
     search,
+    dateFrom,
+    dateTo,
   }: {
     selectedPartner: string;
     selectedStatus: string;
     selectedVault: string;
     search: string;
+    dateFrom?: string;
+    dateTo?: string;
   }) => {
     const normalizedPartner =
       selectedPartner && selectedPartner !== "all"
@@ -89,12 +99,16 @@ export default function useGetCampaigns() {
     const normalizedVaultId =
       selectedVault && selectedVault !== "all" ? selectedVault : undefined;
     const normalizedSearch = search.trim() || undefined;
+    const normalizedDateFrom = dateFrom || undefined;
+    const normalizedDateTo = dateTo || undefined;
 
     setAppliedFilters({
       partner: normalizedPartner,
       search: normalizedSearch,
       status: normalizedStatus,
       vaultId: normalizedVaultId,
+      dateFrom: normalizedDateFrom,
+      dateTo: normalizedDateTo,
     });
     setPage(1);
   };

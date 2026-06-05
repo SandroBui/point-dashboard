@@ -1,4 +1,4 @@
-import { Calendar, Filter, Loader2, RefreshCw, SearchIcon } from "lucide-react";
+import { Filter, Loader2, RefreshCw, SearchIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { Field, FieldLabel } from "@/components/ui/field";
@@ -23,6 +23,14 @@ import { useMemo, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { VaultDataV2 } from "@/types/vaults";
 
+import { addDays, format } from "date-fns";
+import { type DateRange } from "react-day-picker";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 const itemsSelectStatus = [
   { label: "All", value: "all" },
   { label: "Active", value: CampaignStatus.Active },
@@ -39,11 +47,15 @@ interface FilterCampaignProps {
     selectedStatus,
     selectedVault,
     search,
+    dateFrom,
+    dateTo,
   }: {
     selectedPartner: string;
     selectedStatus: string;
     selectedVault: string;
     search: string;
+    dateFrom?: string | undefined;
+    dateTo?: string | undefined;
   }) => void;
   onReset: () => void;
 }
@@ -56,6 +68,7 @@ export const FilterCampaign = ({
   onReset,
   vaultsSelect,
 }: FilterCampaignProps) => {
+  const [date, setDate] = useState<DateRange | undefined>(undefined);
   const [search, setSearch] = useState("");
   const [selectedPartner, setSelectedPartner] = useState<string>("all");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
@@ -85,6 +98,8 @@ export const FilterCampaign = ({
       selectedStatus,
       selectedVault,
       search,
+      dateFrom: date?.from?.toISOString() || undefined,
+      dateTo: date?.to?.toISOString() || undefined,
     });
   };
 
@@ -93,6 +108,7 @@ export const FilterCampaign = ({
     setSelectedPartner("all");
     setSelectedStatus("all");
     setSelectedVault("all");
+    setDate(undefined);
     onReset();
   };
 
@@ -255,17 +271,48 @@ export const FilterCampaign = ({
             )}
           </Field>
 
-          <div className="lg:col-span-1">
-            <div className="text-xs font-medium text-muted-foreground">
+          {/* filter date range */}
+          <Field className="lg:col-span-1">
+            <FieldLabel
+              htmlFor="date-picker-range"
+              className={"text-xs font-medium text-muted-foreground"}
+            >
               Date Range
-            </div>
-            <Button variant="outline" className="mt-1 w-full justify-between">
-              <span className="truncate text-sm">
-                May 1, 2024 – May 31, 2024
-              </span>
-              <Calendar className="size-4 text-muted-foreground" />
-            </Button>
-          </div>
+            </FieldLabel>
+            <Popover>
+              <PopoverTrigger
+                render={
+                  <Button
+                    variant="outline"
+                    id="date-picker-range"
+                    className="justify-start px-2.5 font-normal"
+                  >
+                    {date?.from ? (
+                      date.to ? (
+                        <>
+                          {format(date.from, "LLL dd, y")} -{" "}
+                          {format(date.to, "LLL dd, y")}
+                        </>
+                      ) : (
+                        format(date.from, "LLL dd, y")
+                      )
+                    ) : (
+                      <span>Pick a date</span>
+                    )}
+                  </Button>
+                }
+              />
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="range"
+                  defaultMonth={date?.from}
+                  selected={date}
+                  onSelect={setDate}
+                  numberOfMonths={2}
+                />
+              </PopoverContent>
+            </Popover>
+          </Field>
         </div>
       </CardContent>
     </Card>
