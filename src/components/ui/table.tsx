@@ -3,6 +3,7 @@
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
+import { Skeleton } from "./skeleton";
 
 function Table({ className, ...props }: React.ComponentProps<"table">) {
   return (
@@ -29,13 +30,34 @@ function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
   );
 }
 
-function TableBody({ className, ...props }: React.ComponentProps<"tbody">) {
+type TableBodyProps = React.ComponentProps<"tbody"> & {
+  isLoading?: boolean;
+  skeletonRows?: number;
+};
+
+function TableBody({
+  className,
+  isLoading,
+  skeletonRows = 5,
+  children,
+  ...props
+}: TableBodyProps) {
   return (
     <tbody
       data-slot="table-body"
       className={cn("[&_tr:last-child]:border-0", className)}
       {...props}
-    />
+    >
+      {isLoading
+        ? Array.from({ length: skeletonRows }).map((_, idx) => (
+            <TableRow key={idx} data-slot="table-skeleton-row">
+              <TableCell colSpan={999}>
+                <Skeleton className="h-8 w-full" />
+              </TableCell>
+            </TableRow>
+          ))
+        : children}
+    </tbody>
   );
 }
 

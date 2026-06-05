@@ -66,3 +66,5 @@ export const navGroups: NavGroup[] = [
         ],
     },
 ];
+
+export const ROW_PER_PAGE = [5, 10, 20, 50];
