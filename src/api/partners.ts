@@ -1,5 +1,10 @@
 import apiFetch from "@/lib/apiFetch";
-import { PartnersItem } from "@/types/campaign";
+import type {
+  FilterListResponse,
+  FilterPartnerResource,
+} from "@/types/filters";
 
 export const getPartners = async () =>
-    await apiFetch<PartnersItem[]>(`/api/v1/opportunities/partners`);
+  await apiFetch<FilterListResponse<FilterPartnerResource>>(
+    `/api/v1/admin/filters/partners`,
+  );

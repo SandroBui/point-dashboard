@@ -1,6 +1,5 @@
 import { Filter, Loader2, RefreshCw, SearchIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
 import { Field, FieldLabel } from "@/components/ui/field";
 import {
   InputGroup,
@@ -17,15 +16,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CampaignStatus } from "@/constants/campaign";
 import type {
+  FilterCampaignResource,
   FilterPartnerResource,
   FilterVaultResource,
 } from "@/types/filters";
 import { useMemo, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-
-import { addDays, format } from "date-fns";
+import { format } from "date-fns";
 import { type DateRange } from "react-day-picker";
 import {
   Popover,
@@ -33,57 +31,63 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-const itemsSelectStatus = [
-  { label: "All", value: "all" },
-  { label: "Active", value: CampaignStatus.Active },
-  { label: "Inactive", value: CampaignStatus.Inactive },
-];
 
-interface FilterCampaignProps {
+interface FilterUserCampaignPointHistoryProps {
   isLoading: boolean;
   isApplying?: boolean;
   partnersSelect: FilterPartnerResource[];
+  campaignsSelect: FilterCampaignResource[];
   vaultsSelect: FilterVaultResource[];
   onApply: ({
+    userAddress,
+    selectedCampaign,
     selectedPartner,
-    selectedStatus,
     selectedVault,
-    search,
     dateFrom,
     dateTo,
   }: {
+    userAddress: string;
+    selectedCampaign: string;
     selectedPartner: string;
-    selectedStatus: string;
     selectedVault: string;
-    search: string;
-    dateFrom?: string | undefined;
-    dateTo?: string | undefined;
+    dateFrom?: string;
+    dateTo?: string;
   }) => void;
   onReset: () => void;
 }
 
-export const FilterCampaign = ({
+export const FilterUserCampaignPointHistory = ({
   isLoading,
   isApplying,
   partnersSelect,
+  campaignsSelect,
+  vaultsSelect,
   onApply,
   onReset,
-  vaultsSelect,
-}: FilterCampaignProps) => {
+}: FilterUserCampaignPointHistoryProps) => {
   const [date, setDate] = useState<DateRange | undefined>(undefined);
-  const [search, setSearch] = useState("");
+  const [userAddress, setUserAddress] = useState("");
+  const [selectedCampaign, setSelectedCampaign] = useState<string>("all");
   const [selectedPartner, setSelectedPartner] = useState<string>("all");
-  const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [selectedVault, setSelectedVault] = useState<string>("all");
 
   const itemsSelectPartner = useMemo(() => {
     return (
       partnersSelect?.map((item) => ({
         label: item.attributes.name,
-        value: item.attributes.partner_slug,
+        value: item.id,
       })) || []
     );
   }, [partnersSelect]);
+
+  const itemsSelectCampaign = useMemo(() => {
+    return (
+      campaignsSelect?.map((item) => ({
+        label: item.attributes.name,
+        value: item.id,
+      })) || []
+    );
+  }, [campaignsSelect]);
 
   const itemsSelectVault = useMemo(() => {
     return (
@@ -96,19 +100,19 @@ export const FilterCampaign = ({
 
   const handleApply = () => {
     onApply({
+      userAddress,
+      selectedCampaign,
       selectedPartner,
-      selectedStatus,
       selectedVault,
-      search,
       dateFrom: date?.from?.toISOString() || undefined,
       dateTo: date?.to?.toISOString() || undefined,
     });
   };
 
   const handleReset = () => {
-    setSearch("");
+    setUserAddress("");
+    setSelectedCampaign("all");
     setSelectedPartner("all");
-    setSelectedStatus("all");
     setSelectedVault("all");
     setDate(undefined);
     onReset();
@@ -121,15 +125,15 @@ export const FilterCampaign = ({
           <Field className="max-w-sm">
             <InputGroup>
               <InputGroupInput
-                id="inline-end-input"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                id="user-address-input"
+                value={userAddress}
+                onChange={(e) => setUserAddress(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key !== "Enter") return;
                   e.preventDefault();
                   handleApply();
                 }}
-                placeholder="Search..."
+                placeholder="Search by user address..."
               />
               <InputGroupAddon align="inline-end">
                 <SearchIcon className="text-muted-foreground" />
@@ -158,31 +162,36 @@ export const FilterCampaign = ({
         </CardTitle>
       </CardHeader>
       <CardContent className="pt-4">
-        <div className="grid gap-3 lg:grid-cols-5">
-          {/* filter status */}
+        <div className="grid gap-3 lg:grid-cols-4">
           <Field className="lg:col-span-1">
-            <FieldLabel className={"text-xs font-medium text-muted-foreground"}>
-              Status
+            <FieldLabel className="text-xs font-medium text-muted-foreground">
+              Campaign
             </FieldLabel>
             {isLoading ? (
               <Skeleton className="h-8" />
             ) : (
               <Select
-                items={itemsSelectStatus}
-                value={selectedStatus}
-                onValueChange={(value) => setSelectedStatus(value ?? "all")}
+                items={itemsSelectCampaign.concat({
+                  label: "All",
+                  value: "all",
+                })}
+                value={selectedCampaign}
+                onValueChange={(value) => setSelectedCampaign(value ?? "all")}
               >
-                <SelectTrigger className="">
-                  <SelectValue placeholder="Status" />
+                <SelectTrigger>
+                  <SelectValue placeholder="Campaign" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    <SelectLabel>Status</SelectLabel>
-                    {itemsSelectStatus.map((item) => (
+                    <SelectLabel>Campaign</SelectLabel>
+                    <SelectItem key="all" value="all" className="text-sm">
+                      All
+                    </SelectItem>
+                    {itemsSelectCampaign.map((item) => (
                       <SelectItem
                         key={item.value}
                         value={item.value}
-                        className={"text-sm"}
+                        className="text-sm"
                       >
                         {item.label}
                       </SelectItem>
@@ -193,9 +202,8 @@ export const FilterCampaign = ({
             )}
           </Field>
 
-          {/* filter partner */}
           <Field className="lg:col-span-1">
-            <FieldLabel className={"text-xs font-medium text-muted-foreground"}>
+            <FieldLabel className="text-xs font-medium text-muted-foreground">
               Partner
             </FieldLabel>
             {isLoading ? (
@@ -209,20 +217,20 @@ export const FilterCampaign = ({
                 value={selectedPartner}
                 onValueChange={(value) => setSelectedPartner(value ?? "all")}
               >
-                <SelectTrigger className="">
+                <SelectTrigger>
                   <SelectValue placeholder="Partner" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
                     <SelectLabel>Partner</SelectLabel>
-                    <SelectItem key={"all"} value={"all"} className={"text-sm"}>
+                    <SelectItem key="all" value="all" className="text-sm">
                       All
                     </SelectItem>
                     {itemsSelectPartner.map((item) => (
                       <SelectItem
                         key={item.value}
                         value={item.value}
-                        className={"text-sm"}
+                        className="text-sm"
                       >
                         {item.label}
                       </SelectItem>
@@ -233,10 +241,9 @@ export const FilterCampaign = ({
             )}
           </Field>
 
-          {/* filter vault */}
           <Field className="lg:col-span-1">
-            <FieldLabel className={"text-xs font-medium text-muted-foreground"}>
-              Vaults
+            <FieldLabel className="text-xs font-medium text-muted-foreground">
+              Vault
             </FieldLabel>
             {isLoading ? (
               <Skeleton className="h-8" />
@@ -249,20 +256,20 @@ export const FilterCampaign = ({
                 value={selectedVault}
                 onValueChange={(value) => setSelectedVault(value ?? "all")}
               >
-                <SelectTrigger className="">
+                <SelectTrigger>
                   <SelectValue placeholder="Vault" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    <SelectLabel>Vaults</SelectLabel>
-                    <SelectItem key={"all"} value={"all"} className={"text-sm"}>
+                    <SelectLabel>Vault</SelectLabel>
+                    <SelectItem key="all" value="all" className="text-sm">
                       All
                     </SelectItem>
                     {itemsSelectVault.map((item) => (
                       <SelectItem
                         key={item.value}
                         value={item.value}
-                        className={"text-sm"}
+                        className="text-sm"
                       >
                         {item.label}
                       </SelectItem>
@@ -273,11 +280,10 @@ export const FilterCampaign = ({
             )}
           </Field>
 
-          {/* filter date range */}
           <Field className="lg:col-span-1">
             <FieldLabel
               htmlFor="date-picker-range"
-              className={"text-xs font-medium text-muted-foreground"}
+              className="text-xs font-medium text-muted-foreground"
             >
               Date Range
             </FieldLabel>

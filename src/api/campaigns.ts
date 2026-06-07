@@ -3,6 +3,10 @@ import type {
   CampaignsResponse,
   CreateCampaignInput,
 } from "@/types/campaign";
+import type {
+  FilterCampaignResource,
+  FilterListResponse,
+} from "@/types/filters";
 import apiFetch from "../lib/apiFetch";
 import qs from 'query-string';
 
@@ -28,6 +32,11 @@ export const getCampaigns = async (
       'filter[from_time]': dateFrom,
       'filter[to_time]': dateTo,
     })}`,
+  );
+
+export const getFilterCampaigns = async () =>
+  await apiFetch<FilterListResponse<FilterCampaignResource>>(
+    `/api/v1/admin/filters/campaigns`,
   );
 
 export const createCampaign = async (input: CreateCampaignInput) =>

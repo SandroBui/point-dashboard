@@ -44,7 +44,7 @@ export const navGroups: NavGroup[] = [
                 href: "/dashboard/user-campaign-points",
                 icon: ClipboardList,
             },
-            { title: "Point History", href: "/dashboard/point-history", icon: Boxes },
+            { title: "User Point History", href: "/dashboard/user-campaign-points-history", icon: Boxes },
         ],
     },
     {

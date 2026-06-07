@@ -40,7 +40,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ROW_PER_PAGE } from "@/constants/dashboard";
-import { CampaignAttributes, PartnersItem } from "@/types/campaign";
+import { CampaignAttributes } from "@/types/campaign";
 import { CampaignStatus } from "@/constants/campaign";
 import useGetCampaigns from "@/hooks/useGetCampaign";
 import { format } from "date-fns";
@@ -57,7 +57,6 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { VaultDataV2 } from "@/types/vaults";
 
 function statusBadgeVariant(status: CampaignAttributes["status"]) {
   switch (status) {
@@ -118,10 +117,10 @@ export default function CampaignsPage() {
       <FilterCampaign
         isLoading={isLoadingFilter}
         isApplying={isLoadingGetCampaigns}
-        partnersSelect={listPartners as PartnersItem[]}
+        partnersSelect={listPartners ?? []}
         onApply={applyFilters}
         onReset={resetFilters}
-        vaultsSelect={(listVaults ?? []) as VaultDataV2[]}
+        vaultsSelect={listVaults ?? []}
       />
       <Card>
         <CardHeader className="flex justify-between items-center gap-1">

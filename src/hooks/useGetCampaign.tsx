@@ -126,12 +126,12 @@ export default function useGetCampaigns() {
     page,
     limit,
     appliedFilters,
-    listPartners,
+    listPartners: listPartners?.data ?? [],
     campaigns,
     isLoadingGetCampaigns,
     handleNextPage,
     handlePreviousPage,
     isLoadingFilter: isLoadingGetPartners || isLoadingGetVaults,
-    listVaults: listVaults?.data || [],
+    listVaults: listVaults?.data ?? [],
   };
 }
