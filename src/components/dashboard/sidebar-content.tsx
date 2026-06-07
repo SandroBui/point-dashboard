@@ -1,6 +1,5 @@
 import { ChevronsLeft, Waypoints } from "lucide-react";
 import { Button } from "../ui/button";
-import { ModeToggle } from "../mode-toggle";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { navGroups } from "@/constants/dashboard";
@@ -58,13 +57,6 @@ export function SidebarContent({
             </div>
           </div>
         ))}
-      </div>
-
-      <div className="border-t border-sidebar-border p-3">
-        <div className="flex justify-between items-center gap-2 rounded-lg bg-sidebar-accent/40 px-3 py-2">
-          <span className="text-sm text-sidebar-foreground/80">Theme</span>
-          <ModeToggle />
-        </div>
       </div>
     </div>
   );

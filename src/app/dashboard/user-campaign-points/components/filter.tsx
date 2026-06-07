@@ -17,62 +17,52 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CampaignStatus } from "@/constants/campaign";
-import { PartnersItem } from "@/types/campaign";
+
+import { Campaign, PartnersItem } from "@/types/campaign";
 import { useMemo, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { VaultDataV2 } from "@/types/vaults";
 
-import { format } from "date-fns";
-import { type DateRange } from "react-day-picker";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
+import { Input } from "@/components/ui/input";
+import { UserCampaignPointsStatus } from "@/constants/userCampaignPoints";
+import { ApplyFiltersUserCampaignPointsType } from "@/hooks/useGetUserCampaignPoints";
 const itemsSelectStatus = [
   { label: "All", value: "all" },
-  { label: "Active", value: CampaignStatus.Active },
-  { label: "Inactive", value: CampaignStatus.Inactive },
+  { label: "Active", value: UserCampaignPointsStatus.Active },
+  { label: "Disabled", value: UserCampaignPointsStatus.Disabled },
 ];
 
-interface FilterCampaignProps {
+interface FilterUserCampaignPointsProps {
   isLoading: boolean;
   isApplying?: boolean;
   partnersSelect: PartnersItem[];
   vaultsSelect: VaultDataV2[];
-  onApply: ({
-    selectedPartner,
-    selectedStatus,
-    selectedVault,
-    search,
-    dateFrom,
-    dateTo,
-  }: {
-    selectedPartner: string;
-    selectedStatus: string;
-    selectedVault: string;
-    search: string;
-    dateFrom?: string | undefined;
-    dateTo?: string | undefined;
-  }) => void;
+  campaignsSelect: Campaign[];
+  onApply: (filters: ApplyFiltersUserCampaignPointsType) => void;
   onReset: () => void;
 }
 
-export const FilterCampaign = ({
+export const FilterUserCampaignPoints = ({
   isLoading,
   isApplying,
   partnersSelect,
   onApply,
   onReset,
   vaultsSelect,
-}: FilterCampaignProps) => {
-  const [date, setDate] = useState<DateRange | undefined>(undefined);
+  campaignsSelect,
+}: FilterUserCampaignPointsProps) => {
   const [search, setSearch] = useState("");
   const [selectedPartner, setSelectedPartner] = useState<string>("all");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
+  const [selectedCampaign, setSelectedCampaign] = useState<string>("all");
   const [selectedVault, setSelectedVault] = useState<string>("all");
+  const [rangePoints, setRangePoints] = useState<{
+    min: string;
+    max: string;
+  }>({
+    min: "",
+    max: "",
+  });
 
   const itemsSelectPartner = useMemo(() => {
     return (
@@ -92,14 +82,24 @@ export const FilterCampaign = ({
     );
   }, [vaultsSelect]);
 
+  const itemsSelectCampaign = useMemo(() => {
+    return (
+      campaignsSelect?.map((item) => ({
+        label: item.name,
+        value: item.id,
+      })) || []
+    );
+  }, [campaignsSelect]);
+
   const handleApply = () => {
     onApply({
       selectedPartner,
       selectedStatus,
       selectedVault,
       search,
-      dateFrom: date?.from?.toISOString() || undefined,
-      dateTo: date?.to?.toISOString() || undefined,
+      minPoints: rangePoints.min,
+      maxPoints: rangePoints.max,
+      selectedCampaign,
     });
   };
 
@@ -108,7 +108,11 @@ export const FilterCampaign = ({
     setSelectedPartner("all");
     setSelectedStatus("all");
     setSelectedVault("all");
-    setDate(undefined);
+    setSelectedCampaign("all");
+    setRangePoints({
+      min: "",
+      max: "",
+    });
     onReset();
   };
 
@@ -127,7 +131,7 @@ export const FilterCampaign = ({
                   e.preventDefault();
                   handleApply();
                 }}
-                placeholder="Search..."
+                placeholder="Search address"
               />
               <InputGroupAddon align="inline-end">
                 <SearchIcon className="text-muted-foreground" />
@@ -271,47 +275,86 @@ export const FilterCampaign = ({
             )}
           </Field>
 
-          {/* filter date range */}
+          {/* filter campaign */}
           <Field className="lg:col-span-1">
-            <FieldLabel
-              htmlFor="date-picker-range"
-              className={"text-xs font-medium text-muted-foreground"}
-            >
-              Date Range
+            <FieldLabel className={"text-xs font-medium text-muted-foreground"}>
+              Campaigns
             </FieldLabel>
-            <Popover>
-              <PopoverTrigger
-                render={
-                  <Button
-                    variant="outline"
-                    id="date-picker-range"
-                    className="justify-start px-2.5 font-normal"
-                  >
-                    {date?.from ? (
-                      date.to ? (
-                        <>
-                          {format(date.from, "LLL dd, y")} -{" "}
-                          {format(date.to, "LLL dd, y")}
-                        </>
-                      ) : (
-                        format(date.from, "LLL dd, y")
-                      )
-                    ) : (
-                      <span>Pick a date</span>
-                    )}
-                  </Button>
+            {isLoading ? (
+              <Skeleton className="h-8" />
+            ) : (
+              <Select
+                items={itemsSelectCampaign.concat({
+                  label: "All",
+                  value: "all",
+                })}
+                value={selectedCampaign}
+                onValueChange={(value) => setSelectedCampaign(value ?? "all")}
+              >
+                <SelectTrigger className="">
+                  <SelectValue placeholder="Campaign" />
+                </SelectTrigger>
+                <SelectContent className={"w-auto overflow-x-auto"}>
+                  <SelectGroup>
+                    <SelectLabel>Campaigns</SelectLabel>
+                    <SelectItem key={"all"} value={"all"} className={"text-sm"}>
+                      All
+                    </SelectItem>
+                    {itemsSelectCampaign.map((item) => (
+                      <SelectItem
+                        key={item.value}
+                        value={item.value}
+                        className={"text-sm"}
+                      >
+                        {item.label}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            )}
+          </Field>
+
+          {/* filter range point */}
+          <Field className="lg:col-span-1">
+            <FieldLabel className={"text-xs font-medium text-muted-foreground"}>
+              Points Balance
+            </FieldLabel>
+            <div className="flex items-center">
+              <Input
+                type="number"
+                value={rangePoints?.min}
+                onChange={(e) =>
+                  setRangePoints((prev) => ({
+                    ...prev,
+                    min: e.target.value,
+                  }))
                 }
+                onKeyDown={(e) => {
+                  if (e.key !== "Enter") return;
+                  e.preventDefault();
+                  handleApply();
+                }}
+                placeholder="Min"
               />
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="range"
-                  defaultMonth={date?.from}
-                  selected={date}
-                  onSelect={setDate}
-                  numberOfMonths={2}
-                />
-              </PopoverContent>
-            </Popover>
+              {"-"}
+              <Input
+                type="number"
+                value={rangePoints?.max}
+                onChange={(e) =>
+                  setRangePoints((prev) => ({
+                    ...prev,
+                    max: e.target.value,
+                  }))
+                }
+                onKeyDown={(e) => {
+                  if (e.key !== "Enter") return;
+                  e.preventDefault();
+                  handleApply();
+                }}
+                placeholder="Max"
+              />
+            </div>
           </Field>
         </div>
       </CardContent>

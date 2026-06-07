@@ -16,6 +16,7 @@ import {
 import { signOut, useSession } from "next-auth/react";
 import { SidebarContent } from "./sidebar-content";
 import { navGroups } from "@/constants/dashboard";
+import { ModeToggle } from "../mode-toggle";
 
 function getActiveTitle(pathname: string) {
   for (const group of navGroups) {
@@ -56,6 +57,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
             </div>
 
             <div className="ml-auto flex items-center gap-2">
+              <ModeToggle />
               <Button variant="ghost" size="icon" aria-label="Notifications">
                 <Bell className="size-4" />
               </Button>
