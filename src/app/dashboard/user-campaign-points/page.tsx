@@ -1,5 +1,6 @@
 "use client";
 import {
+  Copy,
   Database,
   Download,
   MoreHorizontal,
@@ -19,7 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { FilterCampaign } from "./components/filter";
+import { FilterUserCampaignPoints } from "./components/filter";
 
 import {
   Pagination,
@@ -40,9 +41,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ROW_PER_PAGE } from "@/constants/dashboard";
-import { CampaignAttributes } from "@/types/campaign";
-import { CampaignStatus } from "@/constants/campaign";
-import useGetCampaigns from "@/hooks/useGetCampaign";
+import { PartnersItem } from "@/types/campaign";
 import { format } from "date-fns";
 import { parseUTCStringToLocalDate } from "@/lib/date";
 import { toFixedNumber, withCommas } from "@/lib/number";
@@ -55,12 +54,28 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
+import { VaultDataV2 } from "@/types/vaults";
+import useGetUserCampaignPoints from "@/hooks/useGetUserCampaignPoints";
+import {
+  UserCampaignPointsStatsAttributes,
+  UserCampaignPointsStatus as UserCampaignPointsStatusType,
+} from "@/types/userCampaignPoints";
+import { UserCampaignPointsStatus } from "@/constants/userCampaignPoints";
+import { copyTextToClipboard, truncateAddress } from "@/lib/string";
 
-function statusBadgeVariant(status: CampaignAttributes["status"]) {
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { useState } from "react";
+import { StatsUserCampaignPoints } from "./components/stats";
+
+function statusBadgeVariant(status: UserCampaignPointsStatusType) {
   switch (status) {
-    case CampaignStatus.Active:
+    case UserCampaignPointsStatus.Active:
       return "success";
-    case CampaignStatus.Inactive:
+    case UserCampaignPointsStatus.Disabled:
       return "muted";
   }
 }
@@ -70,61 +85,82 @@ const itemsSelectRow = ROW_PER_PAGE.map((item) => ({
   value: item,
 }));
 
-export default function CampaignsPage() {
+export default function UserCampaignPointsPage() {
   const {
     page,
     limit,
     handleChangeLimit,
-    campaigns,
+    userCampaignPoints,
     handleOnchangePage,
     handleNextPage,
     handlePreviousPage,
-    isLoadingGetCampaigns,
+    isLoadingGetUserCampaignPoints,
+    listFilterCampaigns,
     listPartners,
     isLoadingFilter,
     applyFilters,
     resetFilters,
     listVaults,
-  } = useGetCampaigns();
+    statsUserCampaignPoints,
+    isLoadingGetStatsUserCampaignPointsStats,
+  } = useGetUserCampaignPoints();
 
-  const totalPages = Math.max(1, campaigns?.meta?.total_pages ?? 1);
+  const totalPages = Math.max(1, userCampaignPoints?.meta?.total_pages ?? 1);
   const canGoPrev = page > 1;
   const canGoNext = page < totalPages;
   const paginationTokens = useGetPaginationTokens(page, totalPages);
+
+  const [currentAddressCopy, setCurrentAddressCopy] = useState("");
+
+  const copyAddressToClipboard = (address: string) => {
+    copyTextToClipboard(address, () => {
+      setCurrentAddressCopy(address);
+      setTimeout(() => {
+        setCurrentAddressCopy("");
+      }, 2000);
+    });
+  };
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Campaigns</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            User Campaign Points
+          </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Manage all campaigns and their configurations
+            View management user points cross all campaigns
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {/* <Button variant="outline">
-            <SlidersHorizontal className="size-4" />
-            Columns
-          </Button> */}
           <Button>
             <Plus className="size-4" />
-            Create Campaign
+            Adjust Points
           </Button>
         </div>
       </div>
-      <FilterCampaign
+      <FilterUserCampaignPoints
         isLoading={isLoadingFilter}
-        isApplying={isLoadingGetCampaigns}
-        partnersSelect={listPartners ?? []}
+        isApplying={isLoadingGetUserCampaignPoints}
+        campaignsSelect={listFilterCampaigns}
+        partnersSelect={listPartners as PartnersItem[]}
         onApply={applyFilters}
         onReset={resetFilters}
-        vaultsSelect={listVaults ?? []}
+        vaultsSelect={(listVaults ?? []) as VaultDataV2[]}
       />
+      <StatsUserCampaignPoints
+        statsData={
+          statsUserCampaignPoints?.data?.attributes ??
+          ({} as UserCampaignPointsStatsAttributes)
+        }
+        isLoading={isLoadingGetStatsUserCampaignPointsStats}
+      />
+
       <Card>
         <CardHeader className="flex justify-between items-center gap-1">
           <div className="space-y-1">
             <CardTitle className="text-sm font-semibold">
-              Total {campaigns?.meta?.total ?? 0} campaigns
+              Total {userCampaignPoints?.meta?.total ?? 0} users
             </CardTitle>
           </div>
           <div className="flex items-center gap-2">
@@ -142,19 +178,22 @@ export default function CampaignsPage() {
           <Table className="min-w-262.5">
             <TableHeader>
               <TableRow>
+                <TableHead className="w-85">User</TableHead>
                 <TableHead className="w-85">Campaign</TableHead>
                 <TableHead>Partner</TableHead>
                 <TableHead>Vault</TableHead>
+                <TableHead className="w-55">Current Points</TableHead>
+                <TableHead className="w-55">Life Time Earned</TableHead>
+                <TableHead>Last Distribution</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Period</TableHead>
-                {/* <TableHead className="text-right">Total Points</TableHead> */}
-                <TableHead className="text-right">Users</TableHead>
-                <TableHead className="w-55">Distributed</TableHead>
                 <TableHead className="w-18 text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody isLoading={isLoadingGetCampaigns} skeletonRows={limit}>
-              {campaigns?.data?.length === 0 && (
+            <TableBody
+              isLoading={isLoadingGetUserCampaignPoints}
+              skeletonRows={limit}
+            >
+              {userCampaignPoints?.data?.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={8} className="p-8">
                     <Empty className="mx-auto max-w-xl">
@@ -169,57 +208,73 @@ export default function CampaignsPage() {
                 </TableRow>
               )}
 
-              {campaigns?.data &&
-                campaigns?.data?.length > 0 &&
-                campaigns?.data?.map(({ id, attributes }) => (
+              {userCampaignPoints?.data &&
+                userCampaignPoints?.data?.length > 0 &&
+                userCampaignPoints?.data?.map(({ id, attributes }) => (
                   <TableRow key={id}>
                     <TableCell>
-                      <div className="truncate font-medium">
-                        {attributes.name}
+                      <div className="flex items-center gap-2">
+                        <p className="truncate font-medium text-blue-400">
+                          {truncateAddress(attributes.user)}
+                        </p>
+                        <Tooltip open={currentAddressCopy === attributes.user}>
+                          <TooltipTrigger
+                            render={
+                              <Copy
+                                className="size-4 cursor-pointer"
+                                onClick={() =>
+                                  copyAddressToClipboard(attributes.user)
+                                }
+                              />
+                            }
+                          />
+                          <TooltipContent>
+                            <p>Address successfully copied!</p>
+                          </TooltipContent>
+                        </Tooltip>
                       </div>
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {attributes.partner_name ?? attributes.partner_slug}
+                    <TableCell className="truncate text-sm text-muted-foreground">
+                      {attributes.campaign}
+                    </TableCell>
+                    <TableCell className="truncate text-sm text-muted-foreground">
+                      {attributes.partner}
+                    </TableCell>
+                    <TableCell className="truncate text-sm text-muted-foreground">
+                      {attributes.vault}
+                    </TableCell>
+                    <TableCell className="text-right text-sm">
+                      {withCommas(
+                        toFixedNumber(
+                          Number(attributes.current_points) || 0,
+                          2,
+                        ),
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right text-sm">
+                      {withCommas(
+                        toFixedNumber(
+                          Number(attributes.lifetime_points) || 0,
+                          2,
+                        ),
+                      )}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {attributes.vault}
+                      {attributes.last_distribution_time &&
+                        format(
+                          parseUTCStringToLocalDate(
+                            attributes.last_distribution_time,
+                          ),
+                          "MMM dd, yyyy",
+                        )}{" "}
                     </TableCell>
                     <TableCell>
                       <Badge
                         variant={statusBadgeVariant(attributes.status)}
                         className="capitalize"
                       >
-                        {attributes.status}
+                        {attributes.status.toLowerCase()}
                       </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {attributes.start_date &&
-                        format(
-                          parseUTCStringToLocalDate(attributes.start_date),
-                          "MMM dd, yyyy",
-                        )}{" "}
-                      -{" "}
-                      {attributes.end_date
-                        ? format(
-                            parseUTCStringToLocalDate(attributes.end_date),
-                            "MMM dd, yyyy",
-                          )
-                        : "Present"}
-                    </TableCell>
-                    {/* <TableCell className="text-right text-sm">
-                    {row.totalPoints}
-                  </TableCell> */}
-                    <TableCell className="text-right text-sm">
-                      {withCommas(
-                        toFixedNumber(attributes.totals_user || 0, 2),
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-xs text-muted-foreground">
-                        {withCommas(
-                          toFixedNumber(attributes.distributed || 0, 2),
-                        )}
-                      </div>
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">

@@ -8,8 +8,7 @@ import type {
   FilterListResponse,
 } from "@/types/filters";
 import apiFetch from "../lib/apiFetch";
-import qs from 'query-string';
-
+import qs from "query-string";
 
 export const getCampaigns = async (
   page: number,
@@ -23,14 +22,14 @@ export const getCampaigns = async (
 ) =>
   await apiFetch<CampaignsResponse>(
     `/api/v1/admin/point-campaigns?${qs.stringify({
-      'page[number]': page,
-      'page[size]': limit,
-      'filter[partner_slug]': partner,
-      'filter[name]': search,
-      'filter[status]': status,
-      'filter[vault_id]': vaultId,
-      'filter[from_time]': dateFrom,
-      'filter[to_time]': dateTo,
+      "page[number]": page,
+      "page[size]": limit,
+      "filter[partner_slug]": partner,
+      "filter[name]": search,
+      "filter[status]": status,
+      "filter[vault_id]": vaultId,
+      "filter[from_time]": dateFrom,
+      "filter[to_time]": dateTo,
     })}`,
   );
 
@@ -49,3 +48,6 @@ export const inactiveCampaign = async (id: string) =>
   await apiFetch<Campaign>(`/api/v1/admin/point-campaigns/${id}/inactive`, {
     method: "PATCH",
   });
+
+export const getAllCampaigns = async () =>
+  await apiFetch<Campaign[]>(`/api/v1/admin/point-campaigns/all`);
