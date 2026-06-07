@@ -18,7 +18,7 @@ export const navGroups: NavGroup[] = [
         items: [
             {
                 title: "Dashboard",
-                href: "/dashboard/campaigns",
+                href: "/dashboard/overview",
                 icon: LayoutDashboard,
             },
         ],
@@ -27,13 +27,13 @@ export const navGroups: NavGroup[] = [
         title: "Campaign Management",
         items: [
             { title: "Campaigns", href: "/dashboard/campaigns", icon: Waypoints },
-            {
-                title: "Campaign Templates",
-                href: "/dashboard/campaign-templates",
-                icon: FileText,
-            },
-            { title: "Vaults", href: "/dashboard/vaults", icon: Vault },
-            { title: "Partners", href: "/dashboard/partners", icon: Building2 },
+            // {
+            //     title: "Campaign Templates",
+            //     href: "/dashboard/campaign-templates",
+            //     icon: FileText,
+            // },
+            // { title: "Vaults", href: "/dashboard/vaults", icon: Vault },
+            // { title: "Partners", href: "/dashboard/partners", icon: Building2 },
         ],
     },
     {
@@ -44,27 +44,27 @@ export const navGroups: NavGroup[] = [
                 href: "/dashboard/user-campaign-points",
                 icon: ClipboardList,
             },
-            { title: "User Point History", href: "/dashboard/user-campaign-points-history", icon: Boxes },
+            { title: "User Campaign Point History", href: "/dashboard/user-campaign-points-history", icon: Boxes },
         ],
     },
-    {
-        title: "Distribution Management",
-        items: [
-            { title: "Distributions", href: "/dashboard/distributions", icon: Users },
-            {
-                title: "Backfill Jobs",
-                href: "/dashboard/backfill-jobs",
-                icon: Shield,
-            },
-        ],
-    },
-    {
-        title: "System",
-        items: [
-            { title: "Settings", href: "/dashboard/settings", icon: Settings },
-            { title: "Audit Logs", href: "/dashboard/audit-logs", icon: Shield },
-        ],
-    },
+    // {
+    //     title: "Distribution Management",
+    //     items: [
+    //         { title: "Distributions", href: "/dashboard/distributions", icon: Users },
+    //         {
+    //             title: "Backfill Jobs",
+    //             href: "/dashboard/backfill-jobs",
+    //             icon: Shield,
+    //         },
+    //     ],
+    // },
+    // {
+    //     title: "System",
+    //     items: [
+    //         { title: "Settings", href: "/dashboard/settings", icon: Settings },
+    //         { title: "Audit Logs", href: "/dashboard/audit-logs", icon: Shield },
+    //     ],
+    // },
 ];
 
 export const ROW_PER_PAGE = [5, 10, 20, 50];

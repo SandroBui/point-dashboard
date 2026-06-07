@@ -41,7 +41,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ROW_PER_PAGE } from "@/constants/dashboard";
-import { PartnersItem } from "@/types/campaign";
 import { format } from "date-fns";
 import { parseUTCStringToLocalDate } from "@/lib/date";
 import { toFixedNumber, withCommas } from "@/lib/number";
@@ -54,7 +53,6 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { VaultDataV2 } from "@/types/vaults";
 import useGetUserCampaignPoints from "@/hooks/useGetUserCampaignPoints";
 import {
   UserCampaignPointsStatsAttributes,
@@ -132,21 +130,21 @@ export default function UserCampaignPointsPage() {
             View management user points cross all campaigns
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        {/* <div className="flex flex-wrap items-center gap-2">
           <Button>
             <Plus className="size-4" />
             Adjust Points
           </Button>
-        </div>
+        </div> */}
       </div>
       <FilterUserCampaignPoints
         isLoading={isLoadingFilter}
         isApplying={isLoadingGetUserCampaignPoints}
         campaignsSelect={listFilterCampaigns}
-        partnersSelect={listPartners as PartnersItem[]}
+        partnersSelect={listPartners}
         onApply={applyFilters}
         onReset={resetFilters}
-        vaultsSelect={(listVaults ?? []) as VaultDataV2[]}
+        vaultsSelect={listVaults ?? []}
       />
       <StatsUserCampaignPoints
         statsData={

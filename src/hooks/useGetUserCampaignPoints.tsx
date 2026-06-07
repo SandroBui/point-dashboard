@@ -177,7 +177,12 @@ export default function useGetUserCampaignPoints() {
     page,
     limit,
     appliedFilters,
-    listPartners,
+    listPartners: (listPartners?.data ?? []).map((partner) => ({
+      id: partner.id,
+      name: partner.attributes.name,
+      slug: partner.attributes.partner_slug,
+      website: "",
+    })),
     userCampaignPoints,
     isLoadingGetUserCampaignPoints,
     handleNextPage,

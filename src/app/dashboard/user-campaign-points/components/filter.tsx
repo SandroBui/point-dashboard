@@ -18,10 +18,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import { Campaign, PartnersItem } from "@/types/campaign";
+import { Campaign } from "@/types/campaign";
 import { useMemo, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { VaultDataV2 } from "@/types/vaults";
 
 import { Input } from "@/components/ui/input";
 import { UserCampaignPointsStatus } from "@/constants/userCampaignPoints";
@@ -35,8 +34,8 @@ const itemsSelectStatus = [
 interface FilterUserCampaignPointsProps {
   isLoading: boolean;
   isApplying?: boolean;
-  partnersSelect: PartnersItem[];
-  vaultsSelect: VaultDataV2[];
+  partnersSelect: { name: string; slug: string }[];
+  vaultsSelect: { id: string; attributes: { name: string } }[];
   campaignsSelect: Campaign[];
   onApply: (filters: ApplyFiltersUserCampaignPointsType) => void;
   onReset: () => void;
