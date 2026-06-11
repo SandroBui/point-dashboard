@@ -44,3 +44,12 @@ export type UserCampaignPointsStatsResource = {
 export type UserCampaignPointsStatsResponse = {
   data: UserCampaignPointsStatsResource;
 };
+
+export type ImportUserCampaignPointsResponse = {
+  data?: {
+    imported?: number;
+    failed?: number;
+    [key: string]: unknown;
+  };
+  message?: string;
+};

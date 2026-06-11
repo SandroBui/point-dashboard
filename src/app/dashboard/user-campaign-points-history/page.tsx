@@ -5,6 +5,8 @@ import {
   ArrowUp,
   ArrowUpDown,
   Database,
+  Download,
+  Loader2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -110,6 +112,8 @@ export default function UserCampaignPointsHistoryPage() {
     resetFilters,
     toggleSort,
     listVaults,
+    handleExport,
+    isExporting,
   } = useGetUserCampaignPointHistory();
 
   const totalPages = Math.max(1, history?.meta?.total_pages ?? 1);
@@ -139,10 +143,18 @@ export default function UserCampaignPointsHistoryPage() {
       />
 
       <Card>
-        <CardHeader>
+        <CardHeader className="flex items-center justify-between gap-1">
           <CardTitle className="text-sm font-semibold">
             Total {withCommas(history?.meta?.total ?? 0)} records
           </CardTitle>
+          <Button variant="outline" onClick={handleExport} disabled={isExporting}>
+            {isExporting ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Download className="size-4" />
+            )}
+            Export
+          </Button>
         </CardHeader>
         <CardContent className="pt-0">
           <Table className="min-w-200">

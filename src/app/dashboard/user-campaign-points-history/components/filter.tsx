@@ -75,7 +75,7 @@ export const FilterUserCampaignPointHistory = ({
     return (
       partnersSelect?.map((item) => ({
         label: item.attributes.name,
-        value: item.id,
+        value: item.attributes.partner_slug,
       })) || []
     );
   }, [partnersSelect]);
@@ -84,7 +84,7 @@ export const FilterUserCampaignPointHistory = ({
     return (
       campaignsSelect?.map((item) => ({
         label: item.attributes.name,
-        value: item.id,
+        value: item.attributes.campaign_id,
       })) || []
     );
   }, [campaignsSelect]);
@@ -93,7 +93,7 @@ export const FilterUserCampaignPointHistory = ({
     return (
       vaultsSelect?.map((item) => ({
         label: item.attributes.name,
-        value: item.id,
+        value: item.attributes.vault_id,
       })) || []
     );
   }, [vaultsSelect]);
@@ -181,7 +181,7 @@ export const FilterUserCampaignPointHistory = ({
                 <SelectTrigger>
                   <SelectValue placeholder="Campaign" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className={"w-auto overflow-x-auto"}>
                   <SelectGroup>
                     <SelectLabel>Campaign</SelectLabel>
                     <SelectItem key="all" value="all" className="text-sm">

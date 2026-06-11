@@ -1,8 +1,12 @@
 import { getFilterCampaigns } from "@/api/campaigns";
 import { getPartners } from "@/api/partners";
-import { getUserCampaignPointHistory } from "@/api/userCampaignPointHistory";
+import {
+  exportUserCampaignPointHistory,
+  getUserCampaignPointHistory,
+} from "@/api/userCampaignPointHistory";
 import { getVaultsV2 } from "@/api/vaults";
 import { ROW_PER_PAGE } from "@/constants/dashboard";
+import { downloadBlob } from "@/lib/download";
 import type {
   HistorySortField,
   HistorySortOrder,
@@ -18,6 +22,7 @@ export default function useGetUserCampaignPointHistory() {
     useState<UserCampaignPointHistoryFilters>({});
   const [sortField, setSortField] = useState<HistorySortField>("created_at");
   const [sortOrder, setSortOrder] = useState<HistorySortOrder>("desc");
+  const [isExporting, setIsExporting] = useState(false);
 
   const { data: listPartners, isLoading: isLoadingGetPartners } = useSWR(
     ["get-partners"],
@@ -125,6 +130,33 @@ export default function useGetUserCampaignPointHistory() {
     setPage(1);
   };
 
+  const handleExport = async () => {
+    if (isExporting) return;
+    setIsExporting(true);
+    try {
+      const { blob, filename } = await exportUserCampaignPointHistory(
+        appliedFilters,
+        sortField,
+        sortOrder,
+      );
+      if (blob.size === 0) {
+        throw new Error("The export returned an empty file.");
+      }
+      downloadBlob(blob, filename);
+    } catch (error) {
+      console.error("Failed to export user campaign point history", error);
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : "Failed to export user campaign point history. Please try again.";
+      if (typeof window !== "undefined") {
+        window.alert(message);
+      }
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return {
     page,
     limit,
@@ -138,6 +170,8 @@ export default function useGetUserCampaignPointHistory() {
     applyFilters,
     resetFilters,
     toggleSort,
+    handleExport,
+    isExporting,
     isLoadingHistory,
     isLoadingFilter:
       isLoadingGetPartners || isLoadingGetVaults || isLoadingGetCampaigns,

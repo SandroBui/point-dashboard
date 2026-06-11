@@ -89,7 +89,7 @@ export const FilterCampaign = ({
     return (
       vaultsSelect?.map((item) => ({
         label: item.attributes.name,
-        value: item.id,
+        value: item.attributes.vault_id,
       })) || []
     );
   }, [vaultsSelect]);

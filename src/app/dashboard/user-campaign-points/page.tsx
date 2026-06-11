@@ -3,9 +3,9 @@ import {
   Copy,
   Database,
   Download,
+  Loader2,
   MoreHorizontal,
   Pencil,
-  Plus,
   SlidersHorizontal,
 } from "lucide-react";
 
@@ -68,6 +68,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useState } from "react";
 import { StatsUserCampaignPoints } from "./components/stats";
+import { ImportUserCampaignPointsDialog } from "./components/import-dialog";
 
 function statusBadgeVariant(status: UserCampaignPointsStatusType) {
   switch (status) {
@@ -101,6 +102,9 @@ export default function UserCampaignPointsPage() {
     listVaults,
     statsUserCampaignPoints,
     isLoadingGetStatsUserCampaignPointsStats,
+    handleExport,
+    isExporting,
+    refreshUserCampaignPoints,
   } = useGetUserCampaignPoints();
 
   const totalPages = Math.max(1, userCampaignPoints?.meta?.total_pages ?? 1);
@@ -130,12 +134,11 @@ export default function UserCampaignPointsPage() {
             View management user points cross all campaigns
           </p>
         </div>
-        {/* <div className="flex flex-wrap items-center gap-2">
-          <Button>
-            <Plus className="size-4" />
-            Adjust Points
-          </Button>
-        </div> */}
+        <div className="flex flex-wrap items-center gap-2">
+          <ImportUserCampaignPointsDialog
+            onImported={() => refreshUserCampaignPoints()}
+          />
+        </div>
       </div>
       <FilterUserCampaignPoints
         isLoading={isLoadingFilter}
@@ -162,8 +165,16 @@ export default function UserCampaignPointsPage() {
             </CardTitle>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline">
-              <Download className="size-4" />
+            <Button
+              variant="outline"
+              onClick={handleExport}
+              disabled={isExporting}
+            >
+              {isExporting ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Download className="size-4" />
+              )}
               Export
             </Button>
             <Button variant="outline">

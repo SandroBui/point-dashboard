@@ -2,6 +2,7 @@
 import {
   Database,
   Download,
+  Loader2,
   MoreHorizontal,
   Pencil,
   Plus,
@@ -20,6 +21,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { FilterCampaign } from "./components/filter";
+import { ImportCampaignDialog } from "./components/import-dialog";
 
 import {
   Pagination,
@@ -85,6 +87,9 @@ export default function CampaignsPage() {
     applyFilters,
     resetFilters,
     listVaults,
+    refreshCampaigns,
+    handleExport,
+    isExporting,
   } = useGetCampaigns();
 
   const totalPages = Math.max(1, campaigns?.meta?.total_pages ?? 1);
@@ -102,10 +107,7 @@ export default function CampaignsPage() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {/* <Button variant="outline">
-            <SlidersHorizontal className="size-4" />
-            Columns
-          </Button> */}
+          <ImportCampaignDialog onImported={() => refreshCampaigns()} />
           <Button>
             <Plus className="size-4" />
             Create Campaign
@@ -128,8 +130,16 @@ export default function CampaignsPage() {
             </CardTitle>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline">
-              <Download className="size-4" />
+            <Button
+              variant="outline"
+              onClick={handleExport}
+              disabled={isExporting}
+            >
+              {isExporting ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Download className="size-4" />
+              )}
               Export
             </Button>
             <Button variant="outline">

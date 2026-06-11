@@ -1,11 +1,13 @@
-import { getAllCampaigns } from "@/api/campaigns";
+import { getFilterCampaigns } from "@/api/campaigns";
 import { getPartners } from "@/api/partners";
 import {
+  exportUserCampaignPoints,
   getStatsUserCampaignPoints,
   getUserCampaignPoints,
 } from "@/api/userCampaignsPoints";
 import { getVaultsV2 } from "@/api/vaults";
 import { ROW_PER_PAGE } from "@/constants/dashboard";
+import { downloadBlob } from "@/lib/download";
 import { useState } from "react";
 
 import useSWR from "swr";
@@ -36,23 +38,25 @@ export default function useGetUserCampaignPoints() {
 
   const [appliedFilters, setAppliedFilters] =
     useState<UserCampaignPointsFilters>({});
+  const [isExporting, setIsExporting] = useState(false);
 
   const { data: listPartners, isLoading: isLoadingGetPartners } = useSWR(
-    ["get-partners"],
+    ["get-filter-partners"],
     () => getPartners(),
   );
 
   const { data: listVaults, isLoading: isLoadingGetVaults } = useSWR(
-    ["get-all-vaults"],
+    ["get-filter-vaults"],
     () => getVaultsV2(),
   );
 
   const { data: listFilterCampaigns, isLoading: isLoadingGeFilterCampaigns } =
-    useSWR(["get-all-campaigns"], () => getAllCampaigns());
+    useSWR(["get-filter-campaigns"], () => getFilterCampaigns());
 
   const {
     data: userCampaignPoints,
     isLoading: isLoadingGetUserCampaignPoints,
+    mutate: refreshUserCampaignPoints,
   } = useSWR(
     [
       "get-user-campaign-points",
@@ -169,6 +173,37 @@ export default function useGetUserCampaignPoints() {
     setPage(1);
   };
 
+  const handleExport = async () => {
+    if (isExporting) return;
+    setIsExporting(true);
+    try {
+      const { blob, filename } = await exportUserCampaignPoints(
+        appliedFilters.partner,
+        appliedFilters.search,
+        appliedFilters.status,
+        appliedFilters.vaultId,
+        appliedFilters.min,
+        appliedFilters.max,
+        appliedFilters.campaignId,
+      );
+      if (blob.size === 0) {
+        throw new Error("The export returned an empty file.");
+      }
+      downloadBlob(blob, filename);
+    } catch (error) {
+      console.error("Failed to export user campaign points", error);
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : "Failed to export user campaign points. Please try again.";
+      if (typeof window !== "undefined") {
+        window.alert(message);
+      }
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return {
     handleOnchangePage,
     handleChangeLimit,
@@ -177,12 +212,7 @@ export default function useGetUserCampaignPoints() {
     page,
     limit,
     appliedFilters,
-    listPartners: (listPartners?.data ?? []).map((partner) => ({
-      id: partner.id,
-      name: partner.attributes.name,
-      slug: partner.attributes.partner_slug,
-      website: "",
-    })),
+    listPartners: listPartners?.data ?? [],
     userCampaignPoints,
     isLoadingGetUserCampaignPoints,
     handleNextPage,
@@ -190,8 +220,11 @@ export default function useGetUserCampaignPoints() {
     isLoadingFilter:
       isLoadingGetPartners || isLoadingGetVaults || isLoadingGeFilterCampaigns,
     listVaults: listVaults?.data || [],
-    listFilterCampaigns: listFilterCampaigns || [],
+    listFilterCampaigns: listFilterCampaigns?.data || [],
     statsUserCampaignPoints,
     isLoadingGetStatsUserCampaignPointsStats,
+    handleExport,
+    isExporting,
+    refreshUserCampaignPoints,
   };
 }

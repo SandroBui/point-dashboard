@@ -25,9 +25,14 @@ async function apiFetch<T>(
     // Adding it to GET requests makes them "non-simple" CORS requests,
     // which triggers a preflight (OPTIONS) that the API may not handle and
     // causes the browser request to fail even though curl/Postman succeed.
+    //
+    // For FormData bodies we must NOT set Content-Type: the browser sets it
+    // to multipart/form-data with the correct boundary automatically.
     const hasBody = options?.body != null;
+    const isFormData =
+        typeof FormData !== "undefined" && options?.body instanceof FormData;
     const headers: HeadersInit = {
-        ...(hasBody ? { "Content-Type": "application/json" } : {}),
+        ...(hasBody && !isFormData ? { "Content-Type": "application/json" } : {}),
         ...options?.headers,
     };
 

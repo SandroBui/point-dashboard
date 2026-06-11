@@ -1,7 +1,8 @@
-import { getCampaigns } from "@/api/campaigns";
+import { exportCampaigns, getCampaigns } from "@/api/campaigns";
 import { getPartners } from "@/api/partners";
 import { getVaultsV2 } from "@/api/vaults";
 import { ROW_PER_PAGE } from "@/constants/dashboard";
+import { downloadBlob } from "@/lib/download";
 import { useState } from "react";
 
 import useSWR from "swr";
@@ -20,18 +21,23 @@ export default function useGetCampaigns() {
   const [limit, setLimit] = useState(ROW_PER_PAGE[1]);
 
   const [appliedFilters, setAppliedFilters] = useState<CampaignFilters>({});
+  const [isExporting, setIsExporting] = useState(false);
 
   const { data: listPartners, isLoading: isLoadingGetPartners } = useSWR(
-    ["get-partners"],
+    ["get-filter-partners"],
     () => getPartners(),
   );
 
   const { data: listVaults, isLoading: isLoadingGetVaults } = useSWR(
-    ["get-all-vaults"],
+    ["get-filter-vaults"],
     () => getVaultsV2(),
   );
 
-  const { data: campaigns, isLoading: isLoadingGetCampaigns } = useSWR(
+  const {
+    data: campaigns,
+    isLoading: isLoadingGetCampaigns,
+    mutate: refreshCampaigns,
+  } = useSWR(
     [
       "get-campaigns",
       page,
@@ -118,6 +124,29 @@ export default function useGetCampaigns() {
     setPage(1);
   };
 
+  const handleExport = async () => {
+    if (isExporting) return;
+    setIsExporting(true);
+    try {
+      const { blob, filename } = await exportCampaigns(appliedFilters);
+      if (blob.size === 0) {
+        throw new Error("The export returned an empty file.");
+      }
+      downloadBlob(blob, filename);
+    } catch (error) {
+      console.error("Failed to export campaigns", error);
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : "Failed to export campaigns. Please try again.";
+      if (typeof window !== "undefined") {
+        window.alert(message);
+      }
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return {
     handleOnchangePage,
     handleChangeLimit,
@@ -133,5 +162,8 @@ export default function useGetCampaigns() {
     handlePreviousPage,
     isLoadingFilter: isLoadingGetPartners || isLoadingGetVaults,
     listVaults: listVaults?.data ?? [],
+    refreshCampaigns,
+    handleExport,
+    isExporting,
   };
 }

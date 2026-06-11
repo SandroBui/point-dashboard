@@ -50,3 +50,12 @@ export type CampaignsResponse = {
     total_pages: number;
   };
 };
+
+export type ImportCampaignsResponse = {
+  data?: {
+    imported?: number;
+    failed?: number;
+    [key: string]: unknown;
+  };
+  message?: string;
+};

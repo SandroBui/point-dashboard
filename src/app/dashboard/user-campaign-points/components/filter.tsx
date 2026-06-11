@@ -18,13 +18,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import { Campaign } from "@/types/campaign";
 import { useMemo, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { Input } from "@/components/ui/input";
 import { UserCampaignPointsStatus } from "@/constants/userCampaignPoints";
 import { ApplyFiltersUserCampaignPointsType } from "@/hooks/useGetUserCampaignPoints";
+import {
+  FilterCampaignResource,
+  FilterPartnerResource,
+  FilterVaultResource,
+} from "@/types/filters";
 const itemsSelectStatus = [
   { label: "All", value: "all" },
   { label: "Active", value: UserCampaignPointsStatus.Active },
@@ -34,9 +38,9 @@ const itemsSelectStatus = [
 interface FilterUserCampaignPointsProps {
   isLoading: boolean;
   isApplying?: boolean;
-  partnersSelect: { name: string; slug: string }[];
-  vaultsSelect: { id: string; attributes: { name: string } }[];
-  campaignsSelect: Campaign[];
+  partnersSelect: FilterPartnerResource[];
+  vaultsSelect: FilterVaultResource[];
+  campaignsSelect: FilterCampaignResource[];
   onApply: (filters: ApplyFiltersUserCampaignPointsType) => void;
   onReset: () => void;
 }
@@ -66,8 +70,8 @@ export const FilterUserCampaignPoints = ({
   const itemsSelectPartner = useMemo(() => {
     return (
       partnersSelect?.map((item) => ({
-        label: item.name,
-        value: item.slug,
+        label: item.attributes.name,
+        value: item.attributes.partner_slug,
       })) || []
     );
   }, [partnersSelect]);
@@ -76,7 +80,7 @@ export const FilterUserCampaignPoints = ({
     return (
       vaultsSelect?.map((item) => ({
         label: item.attributes.name,
-        value: item.id,
+        value: item.attributes.vault_id,
       })) || []
     );
   }, [vaultsSelect]);
@@ -84,8 +88,8 @@ export const FilterUserCampaignPoints = ({
   const itemsSelectCampaign = useMemo(() => {
     return (
       campaignsSelect?.map((item) => ({
-        label: item.name,
-        value: item.id,
+        label: item.attributes.name,
+        value: item.attributes.campaign_id,
       })) || []
     );
   }, [campaignsSelect]);
