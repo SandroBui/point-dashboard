@@ -13,15 +13,51 @@ type PaginatedListResponse<T> = {
   meta?: { total_pages?: number; total?: number };
 };
 
+type OverviewFilters = {
+  partner?: string;
+  vaultId?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  type?: string;
+};
+
 function useTopList<T>(
   swrKey: string,
-  fetcher: (page: number, limit: number) => Promise<PaginatedListResponse<T>>,
+  fetcher: (
+    page: number,
+    limit: number,
+    partner?: string,
+    vaultId?: string,
+    dateFrom?: string,
+    dateTo?: string,
+    type?: string,
+  ) => Promise<PaginatedListResponse<T>>,
+  filter: OverviewFilters,
 ) {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(ROW_PER_PAGE[1]);
 
-  const { data, isLoading } = useSWR([swrKey, page, limit], () =>
-    fetcher(page, limit),
+  const { data, isLoading, mutate } = useSWR(
+    [
+      swrKey,
+      page,
+      limit,
+      filter.partner,
+      filter.vaultId,
+      filter.dateFrom,
+      filter.dateTo,
+      filter.type,
+    ],
+    () =>
+      fetcher(
+        page,
+        limit,
+        filter.partner,
+        filter.vaultId,
+        filter.dateFrom,
+        filter.dateTo,
+        filter.type,
+      ),
   );
 
   const totalPages = Math.max(1, data?.meta?.total_pages ?? 1);
@@ -53,18 +89,100 @@ function useTopList<T>(
     handleNextPage,
     handlePreviousPage,
     handleChangeLimit,
+    setPage,
+    mutate,
   };
 }
 
 export default function useGetDashboardOverview() {
-  const { data: overview, isLoading: isLoadingOverview } = useSWR(
-    ["get-dashboard-overview"],
-    () => getDashboardOverview(),
+  const [appliedFilters, setAppliedFilters] = useState<OverviewFilters>({});
+
+  const {
+    data: overview,
+    isLoading: isLoadingOverview,
+    mutate: mutateOverviewData,
+  } = useSWR(
+    [
+      "get-dashboard-overview",
+      appliedFilters.partner,
+      appliedFilters.vaultId,
+      appliedFilters.dateFrom,
+      appliedFilters.dateTo,
+      appliedFilters.type,
+    ],
+    () =>
+      getDashboardOverview(
+        appliedFilters.partner,
+        appliedFilters.vaultId,
+        appliedFilters.dateFrom,
+        appliedFilters.dateTo,
+        appliedFilters.type,
+      ),
   );
 
-  const topVaults = useTopList("get-dashboard-top-vaults", getTopVaults);
-  const topPartners = useTopList("get-dashboard-top-partners", getTopPartners);
-  const topUsers = useTopList("get-dashboard-top-users", getTopUsers);
+  const topVaults = useTopList(
+    "get-dashboard-top-vaults",
+    getTopVaults,
+    appliedFilters,
+  );
+  const topPartners = useTopList(
+    "get-dashboard-top-partners",
+    getTopPartners,
+    appliedFilters,
+  );
+  const topUsers = useTopList(
+    "get-dashboard-top-users",
+    getTopUsers,
+    appliedFilters,
+  );
+
+  const applyFilters = ({
+    selectedPartner,
+    selectedVault,
+    dateFrom,
+    dateTo,
+    selectedPointType,
+  }: {
+    selectedPartner: string;
+    selectedVault: string;
+    dateFrom?: string;
+    dateTo?: string;
+    selectedPointType?: string;
+  }) => {
+    const normalizedPartner =
+      selectedPartner && selectedPartner !== "all"
+        ? selectedPartner
+        : undefined;
+    const normalizedVaultId =
+      selectedVault && selectedVault !== "all" ? selectedVault : undefined;
+    const normalizedDateFrom = dateFrom || undefined;
+    const normalizedDateTo = dateTo || undefined;
+    const normalizedType =
+      selectedPointType && selectedPointType !== "all"
+        ? selectedPointType
+        : undefined;
+
+    setAppliedFilters({
+      partner: normalizedPartner,
+      vaultId: normalizedVaultId,
+      dateFrom: normalizedDateFrom,
+      dateTo: normalizedDateTo,
+      type: normalizedType,
+    });
+    topVaults.setPage(1);
+  };
+
+  const resetFilters = () => {
+    setAppliedFilters({});
+    topVaults.setPage(1);
+  };
+
+  const mutationRefreshData = async () => {
+    await topVaults.mutate();
+    await mutateOverviewData();
+    await topPartners.mutate();
+    await topUsers.mutate();
+  };
 
   return {
     overview,
@@ -72,5 +190,9 @@ export default function useGetDashboardOverview() {
     topVaults,
     topPartners,
     topUsers,
+    applyFilters,
+    resetFilters,
+    appliedFilters,
+    mutationRefreshData,
   };
 }

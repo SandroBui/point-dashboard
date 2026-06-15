@@ -9,7 +9,7 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -41,6 +41,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { ROW_PER_PAGE } from "@/constants/dashboard";
 import { CampaignAttributes } from "@/types/campaign";
 import { CampaignStatus } from "@/constants/campaign";
@@ -50,6 +66,9 @@ import { parseUTCStringToLocalDate } from "@/lib/date";
 import { toFixedNumber, withCommas } from "@/lib/number";
 import { cn } from "@/lib/utils";
 import useGetPaginationTokens from "@/hooks/useGetPaginationTokens";
+import Link from "next/link";
+import { inactiveCampaign } from "@/api/campaigns";
+import { toast } from "sonner";
 
 import {
   Empty,
@@ -57,6 +76,8 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
+import useGetFilter from "@/hooks/useGetFilter";
+import { useState } from "react";
 
 function statusBadgeVariant(status: CampaignAttributes["status"]) {
   switch (status) {
@@ -73,6 +94,11 @@ const itemsSelectRow = ROW_PER_PAGE.map((item) => ({
 }));
 
 export default function CampaignsPage() {
+  const [campaignToPause, setCampaignToPause] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+  const [isPausingCampaign, setIsPausingCampaign] = useState(false);
   const {
     page,
     limit,
@@ -82,23 +108,84 @@ export default function CampaignsPage() {
     handleNextPage,
     handlePreviousPage,
     isLoadingGetCampaigns,
-    listPartners,
-    isLoadingFilter,
     applyFilters,
     resetFilters,
-    listVaults,
-    refreshCampaigns,
     handleExport,
     isExporting,
+    refetchCampaignsData,
   } = useGetCampaigns();
+  const { listPartners, isLoadingFilter, listVaults, listFilterPointTypes } =
+    useGetFilter();
 
   const totalPages = Math.max(1, campaigns?.meta?.total_pages ?? 1);
   const canGoPrev = page > 1;
   const canGoNext = page < totalPages;
   const paginationTokens = useGetPaginationTokens(page, totalPages);
 
+  const handlePauseCampaign = async () => {
+    if (!campaignToPause) return;
+
+    const toastId = toast.loading("Pausing campaign...");
+    setIsPausingCampaign(true);
+    try {
+      await inactiveCampaign(campaignToPause.id);
+      await refetchCampaignsData();
+      toast.success("Campaign paused", {
+        id: toastId,
+      });
+      setCampaignToPause(null);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Pause campaign failed";
+      toast.error(message, { id: toastId });
+    } finally {
+      setIsPausingCampaign(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
+      <Dialog
+        open={!!campaignToPause}
+        onOpenChange={(open) => {
+          if (isPausingCampaign) return;
+          if (!open) {
+            setCampaignToPause(null);
+          }
+        }}
+      >
+        <DialogContent showCloseButton={!isPausingCampaign}>
+          <DialogHeader>
+            <DialogTitle>Pause Campaign</DialogTitle>
+            <DialogDescription>
+              {campaignToPause
+                ? `Are you sure you want to pause "${campaignToPause.name}"?`
+                : "Are you sure you want to pause this campaign?"}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isPausingCampaign}
+              onClick={() => setCampaignToPause(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={isPausingCampaign}
+              onClick={handlePauseCampaign}
+            >
+              {isPausingCampaign ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : null}
+              Confirm Pause
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Campaigns</h1>
@@ -107,11 +194,16 @@ export default function CampaignsPage() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <ImportCampaignDialog onImported={() => refreshCampaigns()} />
-          <Button>
+          <ImportCampaignDialog
+            onImported={async () => await refetchCampaignsData()}
+          />
+          <Link
+            href="/dashboard/campaigns/create"
+            className={buttonVariants({})}
+          >
             <Plus className="size-4" />
             Create Campaign
-          </Button>
+          </Link>
         </div>
       </div>
       <FilterCampaign
@@ -121,6 +213,7 @@ export default function CampaignsPage() {
         onApply={applyFilters}
         onReset={resetFilters}
         vaultsSelect={listVaults ?? []}
+        pointTypesSelect={listFilterPointTypes ?? []}
       />
       <Card>
         <CardHeader className="flex justify-between items-center gap-1">
@@ -154,19 +247,21 @@ export default function CampaignsPage() {
               <TableRow>
                 <TableHead className="w-85">Campaign</TableHead>
                 <TableHead>Partner</TableHead>
+                <TableHead>Type</TableHead>
                 <TableHead>Vault</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Period</TableHead>
                 {/* <TableHead className="text-right">Total Points</TableHead> */}
                 <TableHead className="text-right">Users</TableHead>
                 <TableHead className="w-55">Distributed</TableHead>
+                <TableHead className="w-55">Description</TableHead>
                 <TableHead className="w-18 text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody isLoading={isLoadingGetCampaigns} skeletonRows={limit}>
               {campaigns?.data?.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={8} className="p-8">
+                  <TableCell colSpan={10} className="p-8">
                     <Empty className="mx-auto max-w-xl">
                       <EmptyHeader>
                         <EmptyMedia variant="icon">
@@ -190,6 +285,9 @@ export default function CampaignsPage() {
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {attributes.partner_name ?? attributes.partner_slug}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {attributes.point_type_name}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {attributes.vault}
@@ -231,22 +329,63 @@ export default function CampaignsPage() {
                         )}
                       </div>
                     </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {attributes.description ?? "-"}
+                    </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
+                        <Link
+                          href={`/dashboard/campaigns/${id}/edit`}
+                          className={cn(
+                            buttonVariants({
+                              variant: "ghost",
+                              size: "icon-sm",
+                            }),
+                          )}
                           aria-label="Edit"
                         >
                           <Pencil className="size-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          aria-label="More actions"
-                        >
-                          <MoreHorizontal className="size-4" />
-                        </Button>
+                        </Link>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger
+                            render={
+                              <Button
+                                variant="ghost"
+                                size="icon-sm"
+                                aria-label="More actions"
+                              >
+                                <MoreHorizontal className="size-4" />
+                              </Button>
+                            }
+                          />
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem>
+                              <Link href={`/dashboard/campaigns/${id}`}>
+                                View Details
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>
+                              <Link href={`/dashboard/campaigns/${id}/edit`}>
+                                Edit
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              disabled={
+                                attributes.status === CampaignStatus.Inactive
+                              }
+                              variant="destructive"
+                              onClick={() => {
+                                setCampaignToPause({
+                                  id,
+                                  name: attributes.name,
+                                });
+                              }}
+                            >
+                              Pause
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </TableCell>
                   </TableRow>

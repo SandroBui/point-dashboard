@@ -138,5 +138,8 @@ body {
   }
   html {
     @apply font-sans;
+    /* Reserve the scrollbar gutter permanently so opening/closing a modal
+       (which locks scroll) doesn't change the document width and jolt the page. */
+    scrollbar-gutter: stable;
   }
 }

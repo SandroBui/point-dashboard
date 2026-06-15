@@ -18,64 +18,42 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SearchableSelect } from "@/components/searchable-select";
-
+import type { FilterVaultResource } from "@/types/filters";
 import { useMemo, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 
-import { Input } from "@/components/ui/input";
-import { UserCampaignPointsStatus } from "@/constants/userCampaignPoints";
-import { ApplyFiltersUserCampaignPointsType } from "@/hooks/useGetUserCampaignPoints";
-import {
-  FilterCampaignResource,
-  FilterPartnerResource,
-  FilterVaultResource,
-} from "@/types/filters";
 const itemsSelectStatus = [
   { label: "All", value: "all" },
-  { label: "Active", value: UserCampaignPointsStatus.Active },
-  { label: "Disabled", value: UserCampaignPointsStatus.Disabled },
+  { label: "Active", value: "active" },
+  { label: "Inactive", value: "inactive" },
 ];
 
-interface FilterUserCampaignPointsProps {
+interface FilterPartnerPointProps {
   isLoading: boolean;
   isApplying?: boolean;
-  partnersSelect: FilterPartnerResource[];
   vaultsSelect: FilterVaultResource[];
-  campaignsSelect: FilterCampaignResource[];
-  onApply: (filters: ApplyFiltersUserCampaignPointsType) => void;
+  onApply: ({
+    selectedStatus,
+    selectedVault,
+    search,
+  }: {
+    selectedStatus: string;
+    selectedVault: string;
+    search: string;
+  }) => void;
   onReset: () => void;
 }
 
-export const FilterUserCampaignPoints = ({
+export const FilterPartnerPoint = ({
   isLoading,
   isApplying,
-  partnersSelect,
+  vaultsSelect,
   onApply,
   onReset,
-  vaultsSelect,
-  campaignsSelect,
-}: FilterUserCampaignPointsProps) => {
+}: FilterPartnerPointProps) => {
   const [search, setSearch] = useState("");
-  const [selectedPartner, setSelectedPartner] = useState<string>("all");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
-  const [selectedCampaign, setSelectedCampaign] = useState<string>("all");
   const [selectedVault, setSelectedVault] = useState<string>("all");
-  const [rangePoints, setRangePoints] = useState<{
-    min: string;
-    max: string;
-  }>({
-    min: "",
-    max: "",
-  });
-
-  const itemsSelectPartner = useMemo(() => {
-    return (
-      partnersSelect?.map((item) => ({
-        label: item.attributes.name,
-        value: item.attributes.partner_slug,
-      })) || []
-    );
-  }, [partnersSelect]);
 
   const itemsSelectVault = useMemo(() => {
     return (
@@ -86,37 +64,18 @@ export const FilterUserCampaignPoints = ({
     );
   }, [vaultsSelect]);
 
-  const itemsSelectCampaign = useMemo(() => {
-    return (
-      campaignsSelect?.map((item) => ({
-        label: item.attributes.name,
-        value: item.attributes.campaign_id,
-      })) || []
-    );
-  }, [campaignsSelect]);
-
   const handleApply = () => {
     onApply({
-      selectedPartner,
       selectedStatus,
       selectedVault,
       search,
-      minPoints: rangePoints.min,
-      maxPoints: rangePoints.max,
-      selectedCampaign,
     });
   };
 
   const handleReset = () => {
     setSearch("");
-    setSelectedPartner("all");
     setSelectedStatus("all");
     setSelectedVault("all");
-    setSelectedCampaign("all");
-    setRangePoints({
-      min: "",
-      max: "",
-    });
     onReset();
   };
 
@@ -127,7 +86,7 @@ export const FilterUserCampaignPoints = ({
           <Field className="max-w-sm">
             <InputGroup>
               <InputGroupInput
-                id="inline-end-input"
+                id="partner-point-search"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 onKeyDown={(e) => {
@@ -135,7 +94,7 @@ export const FilterUserCampaignPoints = ({
                   e.preventDefault();
                   handleApply();
                 }}
-                placeholder="Search address"
+                placeholder="Search by name or slug..."
               />
               <InputGroupAddon align="inline-end">
                 <SearchIcon className="text-muted-foreground" />
@@ -164,7 +123,7 @@ export const FilterUserCampaignPoints = ({
         </CardTitle>
       </CardHeader>
       <CardContent className="pt-4">
-        <div className="grid gap-3 lg:grid-cols-5">
+        <div className="grid gap-3 lg:grid-cols-4">
           {/* filter status */}
           <Field className="lg:col-span-1">
             <FieldLabel className={"text-xs font-medium text-muted-foreground"}>
@@ -199,24 +158,6 @@ export const FilterUserCampaignPoints = ({
             )}
           </Field>
 
-          {/* filter partner */}
-          <Field className="lg:col-span-1">
-            <FieldLabel className={"text-xs font-medium text-muted-foreground"}>
-              Partner
-            </FieldLabel>
-            {isLoading ? (
-              <Skeleton className="h-8" />
-            ) : (
-              <SearchableSelect
-                items={itemsSelectPartner}
-                value={selectedPartner}
-                onValueChange={setSelectedPartner}
-                placeholder="Partner"
-                searchPlaceholder="Search partner..."
-              />
-            )}
-          </Field>
-
           {/* filter vault */}
           <Field className="lg:col-span-1">
             <FieldLabel className={"text-xs font-medium text-muted-foreground"}>
@@ -233,66 +174,6 @@ export const FilterUserCampaignPoints = ({
                 searchPlaceholder="Search vault..."
               />
             )}
-          </Field>
-
-          {/* filter campaign */}
-          <Field className="lg:col-span-1">
-            <FieldLabel className={"text-xs font-medium text-muted-foreground"}>
-              Campaigns
-            </FieldLabel>
-            {isLoading ? (
-              <Skeleton className="h-8" />
-            ) : (
-              <SearchableSelect
-                items={itemsSelectCampaign}
-                value={selectedCampaign}
-                onValueChange={setSelectedCampaign}
-                placeholder="Campaign"
-                searchPlaceholder="Search campaign..."
-              />
-            )}
-          </Field>
-
-          {/* filter range point */}
-          <Field className="lg:col-span-1">
-            <FieldLabel className={"text-xs font-medium text-muted-foreground"}>
-              Points Balance
-            </FieldLabel>
-            <div className="flex items-center">
-              <Input
-                type="number"
-                value={rangePoints?.min}
-                onChange={(e) =>
-                  setRangePoints((prev) => ({
-                    ...prev,
-                    min: e.target.value,
-                  }))
-                }
-                onKeyDown={(e) => {
-                  if (e.key !== "Enter") return;
-                  e.preventDefault();
-                  handleApply();
-                }}
-                placeholder="Min"
-              />
-              {"-"}
-              <Input
-                type="number"
-                value={rangePoints?.max}
-                onChange={(e) =>
-                  setRangePoints((prev) => ({
-                    ...prev,
-                    max: e.target.value,
-                  }))
-                }
-                onKeyDown={(e) => {
-                  if (e.key !== "Enter") return;
-                  e.preventDefault();
-                  handleApply();
-                }}
-                placeholder="Max"
-              />
-            </div>
           </Field>
         </div>
       </CardContent>

@@ -1,13 +1,7 @@
-import { Filter, Loader2, RefreshCw, SearchIcon } from "lucide-react";
+import { Filter, Loader2, RefreshCw } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldLabel } from "@/components/ui/field";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from "@/components/ui/input-group";
 import { Button } from "@/components/ui/button";
-import { SearchableSelect } from "@/components/searchable-select";
 import type {
   FilterCampaignResource,
   FilterPartnerResource,
@@ -23,22 +17,21 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { SearchableSelect } from "@/components/searchable-select";
 
-interface FilterUserCampaignPointHistoryProps {
+interface FilterPointDistributionHistoryProps {
   isLoading: boolean;
   isApplying?: boolean;
   partnersSelect: FilterPartnerResource[];
   campaignsSelect: FilterCampaignResource[];
   vaultsSelect: FilterVaultResource[];
   onApply: ({
-    userAddress,
     selectedCampaign,
     selectedPartner,
     selectedVault,
     dateFrom,
     dateTo,
   }: {
-    userAddress: string;
     selectedCampaign: string;
     selectedPartner: string;
     selectedVault: string;
@@ -48,7 +41,7 @@ interface FilterUserCampaignPointHistoryProps {
   onReset: () => void;
 }
 
-export const FilterUserCampaignPointHistory = ({
+export const FilterPointDistributionHistory = ({
   isLoading,
   isApplying,
   partnersSelect,
@@ -56,9 +49,8 @@ export const FilterUserCampaignPointHistory = ({
   vaultsSelect,
   onApply,
   onReset,
-}: FilterUserCampaignPointHistoryProps) => {
+}: FilterPointDistributionHistoryProps) => {
   const [date, setDate] = useState<DateRange | undefined>(undefined);
-  const [userAddress, setUserAddress] = useState("");
   const [selectedCampaign, setSelectedCampaign] = useState<string>("all");
   const [selectedPartner, setSelectedPartner] = useState<string>("all");
   const [selectedVault, setSelectedVault] = useState<string>("all");
@@ -92,7 +84,6 @@ export const FilterUserCampaignPointHistory = ({
 
   const handleApply = () => {
     onApply({
-      userAddress,
       selectedCampaign,
       selectedPartner,
       selectedVault,
@@ -102,7 +93,6 @@ export const FilterUserCampaignPointHistory = ({
   };
 
   const handleReset = () => {
-    setUserAddress("");
     setSelectedCampaign("all");
     setSelectedPartner("all");
     setSelectedVault("all");
@@ -113,26 +103,8 @@ export const FilterUserCampaignPointHistory = ({
   return (
     <Card>
       <CardHeader className="pb-0">
-        <CardTitle className="text-sm font-semibold text-muted-foreground flex justify-between items-center">
-          <Field className="max-w-sm">
-            <InputGroup>
-              <InputGroupInput
-                id="user-address-input"
-                value={userAddress}
-                onChange={(e) => setUserAddress(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key !== "Enter") return;
-                  e.preventDefault();
-                  handleApply();
-                }}
-                placeholder="Search by user address..."
-              />
-              <InputGroupAddon align="inline-end">
-                <SearchIcon className="text-muted-foreground" />
-              </InputGroupAddon>
-            </InputGroup>
-          </Field>
-
+        <CardTitle className="flex items-center justify-between text-sm font-semibold text-muted-foreground">
+          <span>Filters</span>
           <div className="flex flex-wrap items-center justify-end gap-2">
             <Button
               variant="outline"
@@ -144,7 +116,7 @@ export const FilterUserCampaignPointHistory = ({
               ) : (
                 <Filter className="size-4" />
               )}
-              Filters
+              Apply
             </Button>
             <Button variant="ghost" disabled={isApplying} onClick={handleReset}>
               <RefreshCw className="size-4" />

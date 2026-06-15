@@ -24,19 +24,29 @@ import {
 } from "@/components/ui/tooltip";
 import useGetDashboardOverview from "@/hooks/useGetDashboardOverview";
 import { copyTextToClipboard, truncateAddress } from "@/lib/string";
-import { toFixedNumber, withCommas } from "@/lib/number";
 import { DashboardOverviewAttributes } from "@/types/dashboard";
 import { useState } from "react";
 
 import { StatsOverview } from "./components/stats";
 import { TableFooter } from "./components/table-footer";
-
-const formatPoints = (value: string) =>
-  withCommas(toFixedNumber(Number(value) || 0, 2));
+import { FilterOverview } from "./components/filter";
+import useGetFilter from "@/hooks/useGetFilter";
+import { toFixedNumber, withCommas } from "@/lib/number";
 
 export default function OverviewPage() {
-  const { overview, isLoadingOverview, topVaults, topPartners, topUsers } =
-    useGetDashboardOverview();
+  const {
+    overview,
+    isLoadingOverview,
+    topVaults,
+    topPartners,
+    topUsers,
+    applyFilters,
+    resetFilters,
+    mutationRefreshData,
+  } = useGetDashboardOverview();
+
+  const { listPartners, isLoadingFilter, listVaults, listFilterPointTypes } =
+    useGetFilter();
 
   const [currentAddressCopy, setCurrentAddressCopy] = useState("");
 
@@ -61,6 +71,22 @@ export default function OverviewPage() {
           </p>
         </div>
       </div>
+
+      <FilterOverview
+        isLoading={isLoadingFilter}
+        isApplying={
+          topVaults.isLoading ||
+          topPartners.isLoading ||
+          topUsers.isLoading ||
+          isLoadingOverview
+        }
+        partnersSelect={listPartners ?? []}
+        onApply={applyFilters}
+        onReset={resetFilters}
+        vaultsSelect={listVaults ?? []}
+        pointTypesSelect={listFilterPointTypes ?? []}
+        onRefreshData={mutationRefreshData}
+      />
 
       <StatsOverview
         statsData={
@@ -117,7 +143,12 @@ export default function OverviewPage() {
                         {attributes.vault}
                       </TableCell>
                       <TableCell className="text-right text-sm">
-                        {formatPoints(attributes.total_points)}
+                        {withCommas(
+                          toFixedNumber(
+                            Number(attributes.total_points || 0),
+                            2,
+                          ),
+                        )}
                       </TableCell>
                       <TableCell className="text-right">
                         <Badge variant="secondary">
@@ -188,7 +219,12 @@ export default function OverviewPage() {
                         {attributes.partner}
                       </TableCell>
                       <TableCell className="text-right text-sm">
-                        {formatPoints(attributes.total_points)}
+                        {withCommas(
+                          toFixedNumber(
+                            Number(attributes.total_points || 0),
+                            2,
+                          ),
+                        )}
                       </TableCell>
                       <TableCell className="text-right">
                         <Badge variant="secondary">
@@ -279,7 +315,12 @@ export default function OverviewPage() {
                         </div>
                       </TableCell>
                       <TableCell className="text-right text-sm">
-                        {formatPoints(attributes.total_points)}
+                        {withCommas(
+                          toFixedNumber(
+                            Number(attributes.total_points || 0),
+                            2,
+                          ),
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}

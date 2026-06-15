@@ -4,3 +4,8 @@ export const parseUTCStringToLocalDate = (utcString: string): Date => {
     const utcStringWithZ = utcString.endsWith('Z') ? utcString : `${utcString}Z`;
     return new Date(utcStringWithZ);
 };
+
+export const normalizeUtcStringToIso = (utcString?: string | null): string => {
+    if (!utcString) return "";
+    return parseUTCStringToLocalDate(utcString).toISOString();
+};

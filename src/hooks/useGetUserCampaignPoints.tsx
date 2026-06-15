@@ -1,11 +1,8 @@
-import { getFilterCampaigns } from "@/api/campaigns";
-import { getPartners } from "@/api/partners";
 import {
   exportUserCampaignPoints,
   getStatsUserCampaignPoints,
   getUserCampaignPoints,
 } from "@/api/userCampaignsPoints";
-import { getVaultsV2 } from "@/api/vaults";
 import { ROW_PER_PAGE } from "@/constants/dashboard";
 import { downloadBlob } from "@/lib/download";
 import { useState } from "react";
@@ -39,19 +36,6 @@ export default function useGetUserCampaignPoints() {
   const [appliedFilters, setAppliedFilters] =
     useState<UserCampaignPointsFilters>({});
   const [isExporting, setIsExporting] = useState(false);
-
-  const { data: listPartners, isLoading: isLoadingGetPartners } = useSWR(
-    ["get-filter-partners"],
-    () => getPartners(),
-  );
-
-  const { data: listVaults, isLoading: isLoadingGetVaults } = useSWR(
-    ["get-filter-vaults"],
-    () => getVaultsV2(),
-  );
-
-  const { data: listFilterCampaigns, isLoading: isLoadingGeFilterCampaigns } =
-    useSWR(["get-filter-campaigns"], () => getFilterCampaigns());
 
   const {
     data: userCampaignPoints,
@@ -212,15 +196,10 @@ export default function useGetUserCampaignPoints() {
     page,
     limit,
     appliedFilters,
-    listPartners: listPartners?.data ?? [],
     userCampaignPoints,
     isLoadingGetUserCampaignPoints,
     handleNextPage,
     handlePreviousPage,
-    isLoadingFilter:
-      isLoadingGetPartners || isLoadingGetVaults || isLoadingGeFilterCampaigns,
-    listVaults: listVaults?.data || [],
-    listFilterCampaigns: listFilterCampaigns?.data || [],
     statsUserCampaignPoints,
     isLoadingGetStatsUserCampaignPointsStats,
     handleExport,

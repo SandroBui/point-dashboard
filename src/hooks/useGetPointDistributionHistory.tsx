@@ -1,48 +1,32 @@
 import {
-  exportUserCampaignPointHistory,
-  getUserCampaignPointHistory,
-} from "@/api/userCampaignPointHistory";
+  exportPointDistributionHistory,
+  getPointDistributionHistory,
+} from "@/api/pointDistributionHistory";
 import { ROW_PER_PAGE } from "@/constants/dashboard";
 import { downloadBlob } from "@/lib/download";
-import type {
-  HistorySortField,
-  HistorySortOrder,
-  UserCampaignPointHistoryFilters,
-} from "@/types/userCampaignPointHistory";
+import type { PointDistributionHistoryFilters } from "@/types/pointDistributionHistory";
 import { useState } from "react";
 import useSWR from "swr";
 
-export default function useGetUserCampaignPointHistory() {
+export default function useGetPointDistributionHistory() {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(ROW_PER_PAGE[1]);
   const [appliedFilters, setAppliedFilters] =
-    useState<UserCampaignPointHistoryFilters>({});
-  const [sortField, setSortField] = useState<HistorySortField>("created_at");
-  const [sortOrder, setSortOrder] = useState<HistorySortOrder>("desc");
+    useState<PointDistributionHistoryFilters>({});
   const [isExporting, setIsExporting] = useState(false);
 
   const { data: history, isLoading: isLoadingHistory } = useSWR(
     [
-      "get-user-campaign-point-history",
+      "get-point-distribution-history",
       page,
       limit,
-      appliedFilters.userAddress,
+      appliedFilters.vaultId,
       appliedFilters.campaignId,
       appliedFilters.partnerId,
-      appliedFilters.vaultId,
       appliedFilters.dateFrom,
       appliedFilters.dateTo,
-      sortField,
-      sortOrder,
     ],
-    () =>
-      getUserCampaignPointHistory(
-        page,
-        limit,
-        appliedFilters,
-        sortField,
-        sortOrder,
-      ),
+    () => getPointDistributionHistory(page, limit, appliedFilters),
   );
 
   const totalPages = Math.max(1, history?.meta?.total_pages ?? 1);
@@ -65,14 +49,12 @@ export default function useGetUserCampaignPointHistory() {
   };
 
   const applyFilters = ({
-    userAddress,
     selectedCampaign,
     selectedPartner,
     selectedVault,
     dateFrom,
     dateTo,
   }: {
-    userAddress: string;
     selectedCampaign: string;
     selectedPartner: string;
     selectedVault: string;
@@ -80,7 +62,6 @@ export default function useGetUserCampaignPointHistory() {
     dateTo?: string;
   }) => {
     setAppliedFilters({
-      userAddress: userAddress.trim() || undefined,
       campaignId:
         selectedCampaign && selectedCampaign !== "all"
           ? selectedCampaign
@@ -102,35 +83,22 @@ export default function useGetUserCampaignPointHistory() {
     setPage(1);
   };
 
-  const toggleSort = (field: HistorySortField) => {
-    if (sortField === field) {
-      setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
-    } else {
-      setSortField(field);
-      setSortOrder("desc");
-    }
-    setPage(1);
-  };
-
   const handleExport = async () => {
     if (isExporting) return;
     setIsExporting(true);
     try {
-      const { blob, filename } = await exportUserCampaignPointHistory(
-        appliedFilters,
-        sortField,
-        sortOrder,
-      );
+      const { blob, filename } =
+        await exportPointDistributionHistory(appliedFilters);
       if (blob.size === 0) {
         throw new Error("The export returned an empty file.");
       }
       downloadBlob(blob, filename);
     } catch (error) {
-      console.error("Failed to export user campaign point history", error);
+      console.error("Failed to export point distribution history", error);
       const message =
         error instanceof Error && error.message
           ? error.message
-          : "Failed to export user campaign point history. Please try again.";
+          : "Failed to export point distribution history. Please try again.";
       if (typeof window !== "undefined") {
         window.alert(message);
       }
@@ -143,15 +111,12 @@ export default function useGetUserCampaignPointHistory() {
     page,
     limit,
     history,
-    sortField,
-    sortOrder,
     handleOnchangePage,
     handleChangeLimit,
     handleNextPage,
     handlePreviousPage,
     applyFilters,
     resetFilters,
-    toggleSort,
     handleExport,
     isExporting,
     isLoadingHistory,

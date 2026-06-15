@@ -17,7 +17,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { SearchableSelect } from "@/components/searchable-select";
 import { CampaignStatus } from "@/constants/campaign";
 import type {
   FilterPartnerResource,
@@ -35,11 +34,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-const itemsSelectStatus = [
-  { label: "All", value: "all" },
-  { label: "Active", value: CampaignStatus.Active },
-  { label: "Inactive", value: CampaignStatus.Inactive },
-];
 
 interface FilterCampaignProps {
   isLoading: boolean;
@@ -49,25 +43,22 @@ interface FilterCampaignProps {
   pointTypesSelect: FilterPointTypeResource[];
   onApply: ({
     selectedPartner,
-    selectedStatus,
     selectedVault,
-    search,
     dateFrom,
     dateTo,
     selectedPointType,
   }: {
     selectedPartner: string;
-    selectedStatus: string;
     selectedVault: string;
-    search: string;
     dateFrom?: string | undefined;
     dateTo?: string | undefined;
     selectedPointType: string;
   }) => void;
   onReset: () => void;
+  onRefreshData: () => void;
 }
 
-export const FilterCampaign = ({
+export const FilterOverview = ({
   isLoading,
   isApplying,
   partnersSelect,
@@ -75,11 +66,10 @@ export const FilterCampaign = ({
   onReset,
   vaultsSelect,
   pointTypesSelect,
+  onRefreshData,
 }: FilterCampaignProps) => {
   const [date, setDate] = useState<DateRange | undefined>(undefined);
-  const [search, setSearch] = useState("");
   const [selectedPartner, setSelectedPartner] = useState<string>("all");
-  const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [selectedVault, setSelectedVault] = useState<string>("all");
   const [selectedPointType, setSelectedPointType] = useState<string>("all");
 
@@ -113,9 +103,7 @@ export const FilterCampaign = ({
   const handleApply = () => {
     onApply({
       selectedPartner,
-      selectedStatus,
       selectedVault,
-      search,
       dateFrom: date?.from?.toISOString() || undefined,
       dateTo: date?.to?.toISOString() || undefined,
       selectedPointType,
@@ -123,9 +111,7 @@ export const FilterCampaign = ({
   };
 
   const handleReset = () => {
-    setSearch("");
     setSelectedPartner("all");
-    setSelectedStatus("all");
     setSelectedVault("all");
     setSelectedPointType("all");
     setDate(undefined);
@@ -136,26 +122,11 @@ export const FilterCampaign = ({
     <Card>
       <CardHeader className="pb-0">
         <CardTitle className="text-sm font-semibold text-muted-foreground flex justify-between items-center">
-          <Field className="max-w-sm">
-            <InputGroup>
-              <InputGroupInput
-                id="inline-end-input"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key !== "Enter") return;
-                  e.preventDefault();
-                  handleApply();
-                }}
-                placeholder="Search..."
-              />
-              <InputGroupAddon align="inline-end">
-                <SearchIcon className="text-muted-foreground" />
-              </InputGroupAddon>
-            </InputGroup>
-          </Field>
-
-          <div className="flex flex-wrap items-center justify-end gap-2">
+          <Button variant="ghost" disabled={isApplying} onClick={onRefreshData}>
+            <RefreshCw className="size-4" />
+            Refresh
+          </Button>
+          <div className="flex gap-2 justify-end items-center">
             <Button
               variant="outline"
               disabled={isApplying}
@@ -177,26 +148,32 @@ export const FilterCampaign = ({
       </CardHeader>
       <CardContent className="pt-4">
         <div className="grid gap-3 lg:grid-cols-5">
-          {/* filter status */}
+          {/* filter partner */}
           <Field className="lg:col-span-1">
             <FieldLabel className={"text-xs font-medium text-muted-foreground"}>
-              Status
+              Partner
             </FieldLabel>
             {isLoading ? (
               <Skeleton className="h-8" />
             ) : (
               <Select
-                items={itemsSelectStatus}
-                value={selectedStatus}
-                onValueChange={(value) => setSelectedStatus(value ?? "all")}
+                items={itemsSelectPartner.concat({
+                  label: "All",
+                  value: "all",
+                })}
+                value={selectedPartner}
+                onValueChange={(value) => setSelectedPartner(value ?? "all")}
               >
                 <SelectTrigger className="">
-                  <SelectValue placeholder="Status" />
+                  <SelectValue placeholder="Partner" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    <SelectLabel>Status</SelectLabel>
-                    {itemsSelectStatus.map((item) => (
+                    <SelectLabel>Partner</SelectLabel>
+                    <SelectItem key={"all"} value={"all"} className={"text-sm"}>
+                      All
+                    </SelectItem>
+                    {itemsSelectPartner.map((item) => (
                       <SelectItem
                         key={item.value}
                         value={item.value}
@@ -211,24 +188,6 @@ export const FilterCampaign = ({
             )}
           </Field>
 
-          {/* filter partner */}
-          <Field className="lg:col-span-1">
-            <FieldLabel className={"text-xs font-medium text-muted-foreground"}>
-              Partner
-            </FieldLabel>
-            {isLoading ? (
-              <Skeleton className="h-8" />
-            ) : (
-              <SearchableSelect
-                items={itemsSelectPartner}
-                value={selectedPartner}
-                onValueChange={setSelectedPartner}
-                placeholder="Partner"
-                searchPlaceholder="Search partner..."
-              />
-            )}
-          </Field>
-
           {/* filter vault */}
           <Field className="lg:col-span-1">
             <FieldLabel className={"text-xs font-medium text-muted-foreground"}>
@@ -237,13 +196,35 @@ export const FilterCampaign = ({
             {isLoading ? (
               <Skeleton className="h-8" />
             ) : (
-              <SearchableSelect
-                items={itemsSelectVault}
+              <Select
+                items={itemsSelectVault.concat({
+                  label: "All",
+                  value: "all",
+                })}
                 value={selectedVault}
-                onValueChange={setSelectedVault}
-                placeholder="Vault"
-                searchPlaceholder="Search vault..."
-              />
+                onValueChange={(value) => setSelectedVault(value ?? "all")}
+              >
+                <SelectTrigger className="">
+                  <SelectValue placeholder="Vault" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectLabel>Vaults</SelectLabel>
+                    <SelectItem key={"all"} value={"all"} className={"text-sm"}>
+                      All
+                    </SelectItem>
+                    {itemsSelectVault.map((item) => (
+                      <SelectItem
+                        key={item.value}
+                        value={item.value}
+                        className={"text-sm"}
+                      >
+                        {item.label}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
             )}
           </Field>
 
@@ -255,13 +236,35 @@ export const FilterCampaign = ({
             {isLoading ? (
               <Skeleton className="h-8" />
             ) : (
-              <SearchableSelect
-                items={itemsSelectPointType}
+              <Select
+                items={itemsSelectPointType.concat({
+                  label: "All",
+                  value: "all",
+                })}
                 value={selectedPointType}
-                onValueChange={setSelectedPointType}
-                placeholder="Point Type"
-                searchPlaceholder="Search point type..."
-              />
+                onValueChange={(value) => setSelectedPointType(value ?? "all")}
+              >
+                <SelectTrigger className="">
+                  <SelectValue placeholder="Point Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectLabel>Point Types</SelectLabel>
+                    <SelectItem key={"all"} value={"all"} className={"text-sm"}>
+                      All
+                    </SelectItem>
+                    {itemsSelectPointType.map((item) => (
+                      <SelectItem
+                        key={item.value}
+                        value={item.value}
+                        className={"text-sm"}
+                      >
+                        {item.label}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
             )}
           </Field>
 

@@ -3,10 +3,12 @@ import type {
   CampaignsResponse,
   CreateCampaignInput,
   ImportCampaignsResponse,
+  CampaignDetailResponse,
 } from "@/types/campaign";
 import type {
   FilterCampaignResource,
   FilterListResponse,
+  FilterPointTypeResource,
 } from "@/types/filters";
 import apiFetch from "../lib/apiFetch";
 import { parseFilename } from "../lib/download";
@@ -21,6 +23,7 @@ export const getCampaigns = async (
   vaultId?: string,
   dateFrom?: string,
   dateTo?: string,
+  type?: string,
 ) =>
   await apiFetch<CampaignsResponse>(
     `/api/v1/admin/point-campaigns?${qs.stringify({
@@ -32,6 +35,7 @@ export const getCampaigns = async (
       "filter[vault_id]": vaultId,
       "filter[from_time]": dateFrom,
       "filter[to_time]": dateTo,
+      "filter[point_type_slug]": type,
     })}`,
   );
 
@@ -46,8 +50,26 @@ export const createCampaign = async (input: CreateCampaignInput) =>
     body: JSON.stringify(input),
   });
 
-export const inactiveCampaign = async (id: string) =>
-  await apiFetch<Campaign>(`/api/v1/admin/point-campaigns/${id}/inactive`, {
+export const getCampaignDetail = async (id: string) => {
+  const res = await apiFetch<CampaignDetailResponse>(
+    `/api/v1/admin/point-campaigns/${id}`,
+  );
+  return res;
+};
+
+export const updateCampaign = async (id: string, input: CreateCampaignInput) => {
+  const res = await apiFetch<CampaignDetailResponse>(
+    `/api/v1/admin/point-campaigns/${id}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(input),
+    },
+  );
+  return res;
+};
+
+export const inactiveCampaign = async (campaignId: string) =>
+  await apiFetch<CampaignDetailResponse>(`/api/v1/admin/point-campaigns/${campaignId}/inactive`, {
     method: "PATCH",
   });
 
@@ -97,3 +119,7 @@ export const importCampaigns = async (file: File) => {
     },
   );
 };
+export const getFilterPointTypes = async () =>
+  await apiFetch<FilterListResponse<FilterPointTypeResource>>(
+    `/api/v1/admin/filters/point-types`,
+  );

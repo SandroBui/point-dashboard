@@ -16,4 +16,10 @@ export type FilterCampaignResource = {
   attributes: { campaign_id: string; name: string };
 };
 
+export type FilterPointTypeResource = {
+  id: string;
+  type: "filter-point-types";
+  attributes: { id: string; name: string; slug: string };
+};
+
 export type FilterListResponse<T> = { data: T[] };

@@ -11,11 +11,13 @@ export type CampaignAttributes = {
   multiplier: number;
   start_date: string;
   end_date: string;
-  partner_slug: string;
+  partner_slug: string
   partner_name: string;
   vault: string;
+  vault_id: string;
   pool_address: string;
   point_type_slug: string;
+  point_type_name: string;
   tags: string[];
   totals_user: number;
   distributed: number;
@@ -26,6 +28,15 @@ export type CampaignAttributes = {
 export type CreateCampaignInput = {
   name: string;
   pool_address: string;
+  partner_slug?: string;
+  point_type_slug?: string;
+  vault_id?: string;
+  multiplier?: number;
+  start_date?: string;
+  end_date?: string;
+  description?: string;
+  tags?: string[];
+  status?: CampaignStatus;
 };
 
 export type PartnersItem = {
@@ -59,3 +70,4 @@ export type ImportCampaignsResponse = {
   };
   message?: string;
 };
+export type CampaignDetailResponse = { data: CampaignResource };

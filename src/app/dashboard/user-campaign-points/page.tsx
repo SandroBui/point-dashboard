@@ -69,6 +69,7 @@ import {
 import { useState } from "react";
 import { StatsUserCampaignPoints } from "./components/stats";
 import { ImportUserCampaignPointsDialog } from "./components/import-dialog";
+import useGetFilter from "@/hooks/useGetFilter";
 
 function statusBadgeVariant(status: UserCampaignPointsStatusType) {
   switch (status) {
@@ -94,18 +95,16 @@ export default function UserCampaignPointsPage() {
     handleNextPage,
     handlePreviousPage,
     isLoadingGetUserCampaignPoints,
-    listFilterCampaigns,
-    listPartners,
-    isLoadingFilter,
     applyFilters,
     resetFilters,
-    listVaults,
     statsUserCampaignPoints,
     isLoadingGetStatsUserCampaignPointsStats,
     handleExport,
     isExporting,
     refreshUserCampaignPoints,
   } = useGetUserCampaignPoints();
+  const { listPartners, isLoadingFilter, listVaults, listFilterCampaigns } =
+    useGetFilter();
 
   const totalPages = Math.max(1, userCampaignPoints?.meta?.total_pages ?? 1);
   const canGoPrev = page > 1;
@@ -247,7 +246,7 @@ export default function UserCampaignPointsPage() {
                       {attributes.campaign}
                     </TableCell>
                     <TableCell className="truncate text-sm text-muted-foreground">
-                      {attributes.partner}
+                      {attributes.partner ?? "-"}
                     </TableCell>
                     <TableCell className="truncate text-sm text-muted-foreground">
                       {attributes.vault}

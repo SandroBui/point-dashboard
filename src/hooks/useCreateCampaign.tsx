@@ -1,6 +1,7 @@
-import { exportCampaigns, getCampaigns } from "@/api/campaigns";
+import { getCampaigns } from "@/api/campaigns";
+import { getPartners } from "@/api/partners";
+import { getVaultsV2 } from "@/api/vaults";
 import { ROW_PER_PAGE } from "@/constants/dashboard";
-import { downloadBlob } from "@/lib/download";
 import { useState } from "react";
 
 import useSWR from "swr";
@@ -12,7 +13,6 @@ type CampaignFilters = {
   vaultId?: string;
   dateFrom?: string;
   dateTo?: string;
-  type?: string;
 };
 
 export default function useGetCampaigns() {
@@ -20,13 +20,18 @@ export default function useGetCampaigns() {
   const [limit, setLimit] = useState(ROW_PER_PAGE[1]);
 
   const [appliedFilters, setAppliedFilters] = useState<CampaignFilters>({});
-  const [isExporting, setIsExporting] = useState(false);
 
-  const {
-    data: campaigns,
-    isLoading: isLoadingGetCampaigns,
-    mutate: refetchCampaignsData,
-  } = useSWR(
+  const { data: listPartners, isLoading: isLoadingGetPartners } = useSWR(
+    ["get-filter-partners"],
+    () => getPartners(),
+  );
+
+  const { data: listVaults, isLoading: isLoadingGetVaults } = useSWR(
+    ["get-filter-vaults"],
+    () => getVaultsV2(),
+  );
+
+  const { data: campaigns, isLoading: isLoadingGetCampaigns } = useSWR(
     [
       "get-campaigns",
       page,
@@ -37,7 +42,6 @@ export default function useGetCampaigns() {
       appliedFilters.vaultId,
       appliedFilters.dateFrom,
       appliedFilters.dateTo,
-      appliedFilters.type,
     ],
     () =>
       getCampaigns(
@@ -49,7 +53,6 @@ export default function useGetCampaigns() {
         appliedFilters.vaultId,
         appliedFilters.dateFrom,
         appliedFilters.dateTo,
-        appliedFilters.type,
       ),
   );
 
@@ -79,7 +82,6 @@ export default function useGetCampaigns() {
     search,
     dateFrom,
     dateTo,
-    selectedPointType,
   }: {
     selectedPartner: string;
     selectedStatus: string;
@@ -87,7 +89,6 @@ export default function useGetCampaigns() {
     search: string;
     dateFrom?: string;
     dateTo?: string;
-    selectedPointType?: string;
   }) => {
     const normalizedPartner =
       selectedPartner && selectedPartner !== "all"
@@ -100,10 +101,6 @@ export default function useGetCampaigns() {
     const normalizedSearch = search.trim() || undefined;
     const normalizedDateFrom = dateFrom || undefined;
     const normalizedDateTo = dateTo || undefined;
-    const normalizedType =
-      selectedPointType && selectedPointType !== "all"
-        ? selectedPointType
-        : undefined;
 
     setAppliedFilters({
       partner: normalizedPartner,
@@ -112,7 +109,6 @@ export default function useGetCampaigns() {
       vaultId: normalizedVaultId,
       dateFrom: normalizedDateFrom,
       dateTo: normalizedDateTo,
-      type: normalizedType,
     });
     setPage(1);
   };
@@ -120,29 +116,6 @@ export default function useGetCampaigns() {
   const resetFilters = () => {
     setAppliedFilters({});
     setPage(1);
-  };
-
-  const handleExport = async () => {
-    if (isExporting) return;
-    setIsExporting(true);
-    try {
-      const { blob, filename } = await exportCampaigns(appliedFilters);
-      if (blob.size === 0) {
-        throw new Error("The export returned an empty file.");
-      }
-      downloadBlob(blob, filename);
-    } catch (error) {
-      console.error("Failed to export campaigns", error);
-      const message =
-        error instanceof Error && error.message
-          ? error.message
-          : "Failed to export campaigns. Please try again.";
-      if (typeof window !== "undefined") {
-        window.alert(message);
-      }
-    } finally {
-      setIsExporting(false);
-    }
   };
 
   return {
@@ -153,12 +126,12 @@ export default function useGetCampaigns() {
     page,
     limit,
     appliedFilters,
+    listPartners: listPartners?.data ?? [],
     campaigns,
     isLoadingGetCampaigns,
     handleNextPage,
     handlePreviousPage,
-    handleExport,
-    isExporting,
-    refetchCampaignsData,
+    isLoadingFilter: isLoadingGetPartners || isLoadingGetVaults,
+    listVaults: listVaults?.data ?? [],
   };
 }

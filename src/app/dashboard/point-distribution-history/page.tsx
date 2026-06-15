@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  ArrowDown,
-  ArrowUp,
-  ArrowUpDown,
-  Database,
-  Download,
-  Loader2,
-} from "lucide-react";
+import { Database, Download, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -36,10 +29,9 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { ROW_PER_PAGE } from "@/constants/dashboard";
-import useGetUserCampaignPointHistory from "@/hooks/useGetUserCampaignPointHistory";
+import useGetPointDistributionHistory from "@/hooks/useGetPointDistributionHistory";
 import useGetPaginationTokens from "@/hooks/useGetPaginationTokens";
-import { FilterUserCampaignPointHistory } from "./components/filter";
-import type { HistorySortField } from "@/types/userCampaignPointHistory";
+import { FilterPointDistributionHistory } from "./components/filter";
 import { format } from "date-fns";
 import { parseUTCStringToLocalDate } from "@/lib/date";
 import { toFixedNumber, withCommas } from "@/lib/number";
@@ -57,50 +49,11 @@ const itemsSelectRow = ROW_PER_PAGE.map((item) => ({
   value: item.toString(),
 }));
 
-function SortableHeader({
-  label,
-  field,
-  sortField,
-  sortOrder,
-  onSort,
-  className,
-}: {
-  label: string;
-  field: HistorySortField;
-  sortField: HistorySortField;
-  sortOrder: "asc" | "desc";
-  onSort: (field: HistorySortField) => void;
-  className?: string;
-}) {
-  const isActive = sortField === field;
-  const Icon = isActive
-    ? sortOrder === "asc"
-      ? ArrowUp
-      : ArrowDown
-    : ArrowUpDown;
-
-  return (
-    <TableHead className={className}>
-      <Button
-        variant="ghost"
-        size="sm"
-        className="-ml-3 h-8 gap-1 font-medium"
-        onClick={() => onSort(field)}
-      >
-        {label}
-        <Icon className="size-3.5" />
-      </Button>
-    </TableHead>
-  );
-}
-
-export default function UserCampaignPointsHistoryPage() {
+export default function PointDistributionHistoryPage() {
   const {
     page,
     limit,
     history,
-    sortField,
-    sortOrder,
     handleChangeLimit,
     handleOnchangePage,
     handleNextPage,
@@ -108,10 +61,9 @@ export default function UserCampaignPointsHistoryPage() {
     isLoadingHistory,
     applyFilters,
     resetFilters,
-    toggleSort,
     handleExport,
     isExporting,
-  } = useGetUserCampaignPointHistory();
+  } = useGetPointDistributionHistory();
   const { listPartners, isLoadingFilter, listVaults, listFilterCampaigns } =
     useGetFilter();
 
@@ -124,14 +76,14 @@ export default function UserCampaignPointsHistoryPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">
-          User Campaign Points History
+          Point Distribution History
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          View point changes per user and campaign over time
+          View point distribution records by vault, partner, and campaign
         </p>
       </div>
 
-      <FilterUserCampaignPointHistory
+      <FilterPointDistributionHistory
         isLoading={isLoadingFilter}
         isApplying={isLoadingHistory}
         partnersSelect={listPartners ?? []}
@@ -163,24 +115,11 @@ export default function UserCampaignPointsHistoryPage() {
           <Table className="min-w-200">
             <TableHeader>
               <TableRow>
-                <TableHead className="w-45">User</TableHead>
+                <TableHead>Vault</TableHead>
                 <TableHead>Campaign</TableHead>
-                <SortableHeader
-                  label="Points Delta"
-                  field="points_delta"
-                  sortField={sortField}
-                  sortOrder={sortOrder}
-                  onSort={toggleSort}
-                  className="text-right"
-                />
-                <TableHead>Note</TableHead>
-                <SortableHeader
-                  label="Created At"
-                  field="created_at"
-                  sortField={sortField}
-                  sortOrder={sortOrder}
-                  onSort={toggleSort}
-                />
+                <TableHead>Partner</TableHead>
+                <TableHead className="text-right">Points</TableHead>
+                <TableHead>Created At</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody isLoading={isLoadingHistory} skeletonRows={limit}>
@@ -201,46 +140,34 @@ export default function UserCampaignPointsHistoryPage() {
 
               {history?.data &&
                 history.data.length > 0 &&
-                history.data.map(({ id, attributes }) => {
-                  const delta = Number(attributes.points_delta);
-                  const isPositive = delta >= 0;
-
-                  return (
-                    <TableRow key={id}>
-                      <TableCell>
-                        <div
-                          className="max-w-45 truncate font-mono text-sm"
-                          title={attributes.user}
-                        >
-                          {attributes.user}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="truncate font-medium">
-                          {attributes.campaign}
-                        </div>
-                      </TableCell>
-                      <TableCell
-                        className={cn(
-                          "text-right text-sm font-medium tabular-nums",
-                          isPositive ? "text-emerald-600" : "text-red-600",
-                        )}
-                      >
-                        {isPositive ? "+" : ""}
-                        {withCommas(toFixedNumber(delta, 6))}
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {attributes.note ?? "—"}
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {format(
-                          parseUTCStringToLocalDate(attributes.created_at),
-                          "MMM dd, yyyy HH:mm",
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
+                history.data.map(({ id, attributes }) => (
+                  <TableRow key={id}>
+                    <TableCell>
+                      <div className="truncate font-medium">
+                        {attributes.vault}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="truncate text-sm text-muted-foreground">
+                        {attributes.campaign ?? "—"}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="truncate font-medium">
+                        {attributes.partner}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right text-sm font-medium tabular-nums">
+                      {withCommas(toFixedNumber(attributes.point, 6))}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {format(
+                        parseUTCStringToLocalDate(attributes.created_at),
+                        "MMM dd, yyyy HH:mm",
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
             </TableBody>
           </Table>
 

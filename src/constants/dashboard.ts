@@ -27,6 +27,11 @@ export const navGroups: NavGroup[] = [
         title: "Campaign Management",
         items: [
             { title: "Campaigns", href: "/dashboard/campaigns", icon: Waypoints },
+            {
+                title: "Partner Points",
+                href: "/dashboard/partner-points",
+                icon: Building2,
+            },
             // {
             //     title: "Campaign Templates",
             //     href: "/dashboard/campaign-templates",
@@ -45,6 +50,11 @@ export const navGroups: NavGroup[] = [
                 icon: ClipboardList,
             },
             { title: "User Campaign Point History", href: "/dashboard/user-campaign-points-history", icon: Boxes },
+            {
+                title: "Point Distribution History",
+                href: "/dashboard/point-distribution-history",
+                icon: FileText,
+            },
         ],
     },
     // {
