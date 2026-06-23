@@ -1,6 +1,15 @@
 "use client";
 
-import { ArrowLeft, Pencil } from "lucide-react";
+import {
+  ArrowLeft,
+  Pencil,
+  Copy,
+  Database,
+  Download,
+  Loader2,
+  MoreHorizontal,
+  SlidersHorizontal,
+} from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import useSWR from "swr";
 import { format } from "date-fns";
@@ -13,6 +22,62 @@ import { Field, FieldLabel } from "@/components/ui/field";
 import { Skeleton } from "@/components/ui/skeleton";
 import { parseUTCStringToLocalDate } from "@/lib/date";
 import { CampaignStatus } from "@/constants/campaign";
+import useGetUserCampaignPoints from "@/hooks/useGetUserCampaignPoints";
+import useGetFilter from "@/hooks/useGetFilter";
+import useGetPaginationTokens from "@/hooks/useGetPaginationTokens";
+import { useState } from "react";
+import { copyTextToClipboard, truncateAddress } from "@/lib/string";
+
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+
+import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
+
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { toFixedNumber, withCommas } from "@/lib/number";
+import { statusBadgeVariant } from "@/lib/userCampaign";
+import { cn } from "@/lib/utils";
+
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ROW_PER_PAGE } from "@/constants/dashboard";
+import { getUserCampaignPointsByCampaignId } from "@/api/userCampaignsPoints";
+
+const itemsSelectRow = ROW_PER_PAGE.map((item) => ({
+  label: item,
+  value: item,
+}));
 
 export default function CampaignDetailPage() {
   const router = useRouter();
@@ -28,6 +93,54 @@ export default function CampaignDetailPage() {
   );
 
   const attrs = campaign?.data?.attributes;
+
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(ROW_PER_PAGE[1]);
+
+  const { data: campaignUserPoints, isLoading: campaignUserPointsLoading } =
+    useSWR(
+      id ? ["campaign-user-points", id, page, limit] : null,
+      ([, campaignId]) =>
+        getUserCampaignPointsByCampaignId(
+          page,
+          limit,
+          campaignId,
+          "-percentage",
+        ),
+    );
+
+  const handleOnchangePage = (newPage: number) => {
+    setPage(Math.min(Math.max(newPage, 1), totalPages));
+  };
+
+  const handleNextPage = () => {
+    setPage((prev) => Math.min(prev + 1, totalPages));
+  };
+
+  const handlePreviousPage = () => {
+    setPage((prev) => Math.max(prev - 1, 1));
+  };
+
+  const handleChangeLimit = (newLimit: number) => {
+    setLimit(newLimit);
+    setPage(1);
+  };
+
+  const totalPages = Math.max(1, campaignUserPoints?.meta?.total_pages ?? 1);
+  const canGoPrev = page > 1;
+  const canGoNext = page < totalPages;
+  const paginationTokens = useGetPaginationTokens(page, totalPages);
+
+  const [currentAddressCopy, setCurrentAddressCopy] = useState("");
+
+  const copyAddressToClipboard = (address: string) => {
+    copyTextToClipboard(address, () => {
+      setCurrentAddressCopy(address);
+      setTimeout(() => {
+        setCurrentAddressCopy("");
+      }, 2000);
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -202,6 +315,179 @@ export default function CampaignDetailPage() {
               </Field>
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex justify-between items-center gap-1">
+          <div className="space-y-1">
+            <CardTitle className="text-sm font-semibold">
+              Total {campaignUserPoints?.meta?.total ?? 0} users
+            </CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <Table className="min-w-262.5">
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-85">Wallet</TableHead>
+                <TableHead className="w-85">Total Point</TableHead>
+                <TableHead>Percentage</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody
+              isLoading={campaignUserPointsLoading}
+              skeletonRows={limit}
+            >
+              {campaignUserPoints?.data?.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={3} className="p-8">
+                    <Empty className="mx-auto max-w-xl">
+                      <EmptyHeader>
+                        <EmptyMedia variant="icon">
+                          <Database />
+                        </EmptyMedia>
+                        <EmptyTitle>No data</EmptyTitle>
+                      </EmptyHeader>
+                    </Empty>
+                  </TableCell>
+                </TableRow>
+              )}
+
+              {campaignUserPoints?.data &&
+                campaignUserPoints?.data?.length > 0 &&
+                campaignUserPoints?.data?.map(({ id, attributes }) => (
+                  <TableRow key={id}>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <p className="truncate font-medium text-blue-400">
+                          {truncateAddress(attributes.user_address)}
+                        </p>
+                        <Tooltip
+                          open={currentAddressCopy === attributes.user_address}
+                        >
+                          <TooltipTrigger
+                            render={
+                              <Copy
+                                className="size-4 cursor-pointer"
+                                onClick={() =>
+                                  copyAddressToClipboard(
+                                    attributes.user_address,
+                                  )
+                                }
+                              />
+                            }
+                          />
+                          <TooltipContent>
+                            <p>Address successfully copied!</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                    </TableCell>
+
+                    <TableCell className="text-sm">
+                      {withCommas(
+                        toFixedNumber(Number(attributes.total_points) || 0, 2),
+                      )}
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {withCommas(
+                        toFixedNumber(Number(attributes.percentage) || 0, 2),
+                      )}
+                      %
+                    </TableCell>
+                  </TableRow>
+                ))}
+            </TableBody>
+          </Table>
+
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex gap-2 items-center shrink-0">
+              <p className="">Rows per page</p>
+              <Select
+                items={itemsSelectRow}
+                onValueChange={(newLimit) =>
+                  handleChangeLimit(Number(newLimit))
+                }
+                value={limit}
+              >
+                <SelectTrigger className="">
+                  <SelectValue placeholder="Rows per page" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {itemsSelectRow.map((item) => (
+                      <SelectItem
+                        key={item.value}
+                        value={item.value}
+                        className={"text-sm"}
+                      >
+                        {item.label}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Pagination className="justify-end">
+              <PaginationContent key={`${page}-${totalPages}`}>
+                <PaginationItem>
+                  <PaginationPrevious
+                    aria-disabled={!canGoPrev}
+                    tabIndex={!canGoPrev ? -1 : undefined}
+                    className={cn(
+                      !canGoPrev && "pointer-events-none opacity-50",
+                    )}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (!canGoPrev) return;
+                      handlePreviousPage();
+                    }}
+                  />
+                </PaginationItem>
+
+                {paginationTokens.map((token, idx) => {
+                  if (token === "ellipsis") {
+                    return (
+                      <PaginationItem key={`ellipsis-${idx}`}>
+                        <PaginationEllipsis />
+                      </PaginationItem>
+                    );
+                  }
+
+                  return (
+                    <PaginationItem key={token}>
+                      <PaginationLink
+                        isActive={token === page}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleOnchangePage(token);
+                        }}
+                      >
+                        {token}
+                      </PaginationLink>
+                    </PaginationItem>
+                  );
+                })}
+
+                <PaginationItem>
+                  <PaginationNext
+                    aria-disabled={!canGoNext}
+                    tabIndex={!canGoNext ? -1 : undefined}
+                    className={cn(
+                      !canGoNext && "pointer-events-none opacity-50",
+                    )}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (!canGoNext) return;
+                      handleNextPage();
+                    }}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
         </CardContent>
       </Card>
     </div>

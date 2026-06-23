@@ -1,7 +1,7 @@
 import { getPartnerPoints } from "@/api/partnerPoints";
 import { getVaultsV2 } from "@/api/vaults";
 import { ROW_PER_PAGE } from "@/constants/dashboard";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 import useSWR from "swr";
 
@@ -65,33 +65,36 @@ export default function useGetPartnerPoints() {
     setPage(1);
   };
 
-  const applyFilters = ({
-    selectedStatus,
-    selectedVault,
-    search,
-  }: {
-    selectedStatus: string;
-    selectedVault: string;
-    search: string;
-  }) => {
-    const normalizedStatus =
-      selectedStatus && selectedStatus !== "all" ? selectedStatus : undefined;
-    const normalizedVaultId =
-      selectedVault && selectedVault !== "all" ? selectedVault : undefined;
-    const normalizedSearch = search.trim() || undefined;
+  const applyFilters = useCallback(
+    ({
+      selectedStatus,
+      selectedVault,
+      search,
+    }: {
+      selectedStatus: string;
+      selectedVault: string;
+      search: string;
+    }) => {
+      const normalizedStatus =
+        selectedStatus && selectedStatus !== "all" ? selectedStatus : undefined;
+      const normalizedVaultId =
+        selectedVault && selectedVault !== "all" ? selectedVault : undefined;
+      const normalizedSearch = search.trim() || undefined;
 
-    setAppliedFilters({
-      search: normalizedSearch,
-      status: normalizedStatus,
-      vaultId: normalizedVaultId,
-    });
-    setPage(1);
-  };
+      setAppliedFilters({
+        search: normalizedSearch,
+        status: normalizedStatus,
+        vaultId: normalizedVaultId,
+      });
+      setPage(1);
+    },
+    [],
+  );
 
-  const resetFilters = () => {
+  const resetFilters = useCallback(() => {
     setAppliedFilters({});
     setPage(1);
-  };
+  }, []);
 
   return {
     handleOnchangePage,

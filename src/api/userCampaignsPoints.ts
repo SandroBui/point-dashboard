@@ -1,6 +1,7 @@
 import apiFetch from "../lib/apiFetch";
 import qs from "query-string";
 import {
+  CampaignUserPointsResponse,
   ImportUserCampaignPointsResponse,
   UserCampaignPointsResponse,
   UserCampaignPointsStatsResponse,
@@ -102,3 +103,18 @@ export const importUserCampaignPoints = async (file: File) => {
     },
   );
 };
+
+
+export const getUserCampaignPointsByCampaignId = async (
+  page: number,
+  limit: number,
+  campaignId: string,
+  sort?: string,
+) =>
+  await apiFetch<CampaignUserPointsResponse>(
+    `/api/v1/admin/user-campaign-points/campaigns/${campaignId}/users?${qs.stringify({
+      "page[number]": page,
+      "page[size]": limit,
+      "sort": sort,
+    })}`,
+  );

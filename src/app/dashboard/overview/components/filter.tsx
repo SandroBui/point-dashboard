@@ -1,12 +1,8 @@
-import { Filter, Loader2, RefreshCw, SearchIcon } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { RefreshCw } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 
 import { Field, FieldLabel } from "@/components/ui/field";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from "@/components/ui/input-group";
+
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -17,16 +13,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CampaignStatus } from "@/constants/campaign";
+
 import type {
   FilterPartnerResource,
   FilterPointTypeResource,
   FilterVaultResource,
 } from "@/types/filters";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 
-import { format } from "date-fns";
+import { format, subDays } from "date-fns";
 import { type DateRange } from "react-day-picker";
 import {
   Popover,
@@ -34,6 +30,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { OverviewFilters } from "@/hooks/useGetDashboardOverview";
 
 interface FilterCampaignProps {
   isLoading: boolean;
@@ -42,18 +39,12 @@ interface FilterCampaignProps {
   vaultsSelect: FilterVaultResource[];
   pointTypesSelect: FilterPointTypeResource[];
   onApply: ({
-    selectedPartner,
-    selectedVault,
+    partner,
+    vaultId,
     dateFrom,
     dateTo,
-    selectedPointType,
-  }: {
-    selectedPartner: string;
-    selectedVault: string;
-    dateFrom?: string | undefined;
-    dateTo?: string | undefined;
-    selectedPointType: string;
-  }) => void;
+    type,
+  }: OverviewFilters) => void;
   onReset: () => void;
   onRefreshData: () => void;
 }
@@ -68,7 +59,11 @@ export const FilterOverview = ({
   pointTypesSelect,
   onRefreshData,
 }: FilterCampaignProps) => {
-  const [date, setDate] = useState<DateRange | undefined>(undefined);
+  const [date, setDate] = useState<DateRange | undefined>({
+    from: new Date(),
+    to: subDays(new Date(), 7),
+  });
+
   const [selectedPartner, setSelectedPartner] = useState<string>("all");
   const [selectedVault, setSelectedVault] = useState<string>("all");
   const [selectedPointType, setSelectedPointType] = useState<string>("all");
@@ -100,15 +95,26 @@ export const FilterOverview = ({
     );
   }, [vaultsSelect]);
 
-  const handleApply = () => {
+  const handleApply = useCallback(() => {
     onApply({
-      selectedPartner,
-      selectedVault,
+      partner: selectedPartner,
+      vaultId: selectedVault,
       dateFrom: date?.from?.toISOString() || undefined,
       dateTo: date?.to?.toISOString() || undefined,
-      selectedPointType,
+      type: selectedPointType,
     });
-  };
+  }, [
+    onApply,
+    selectedPartner,
+    selectedVault,
+    date?.from,
+    date?.to,
+    selectedPointType,
+  ]);
+
+  useEffect(() => {
+    handleApply();
+  }, [handleApply]);
 
   const handleReset = () => {
     setSelectedPartner("all");
@@ -120,33 +126,7 @@ export const FilterOverview = ({
 
   return (
     <Card>
-      <CardHeader className="pb-0">
-        <CardTitle className="text-sm font-semibold text-muted-foreground flex justify-between items-center">
-          <Button variant="ghost" disabled={isApplying} onClick={onRefreshData}>
-            <RefreshCw className="size-4" />
-            Refresh
-          </Button>
-          <div className="flex gap-2 justify-end items-center">
-            <Button
-              variant="outline"
-              disabled={isApplying}
-              onClick={handleApply}
-            >
-              {isApplying ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <Filter className="size-4" />
-              )}
-              Filters
-            </Button>
-            <Button variant="ghost" disabled={isApplying} onClick={handleReset}>
-              <RefreshCw className="size-4" />
-              Reset
-            </Button>
-          </div>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="pt-4">
+      <CardContent className="">
         <div className="grid gap-3 lg:grid-cols-5">
           {/* filter partner */}
           <Field className="lg:col-span-1">
@@ -163,6 +143,7 @@ export const FilterOverview = ({
                 })}
                 value={selectedPartner}
                 onValueChange={(value) => setSelectedPartner(value ?? "all")}
+                disabled={isApplying}
               >
                 <SelectTrigger className="">
                   <SelectValue placeholder="Partner" />
@@ -203,6 +184,7 @@ export const FilterOverview = ({
                 })}
                 value={selectedVault}
                 onValueChange={(value) => setSelectedVault(value ?? "all")}
+                disabled={isApplying}
               >
                 <SelectTrigger className="">
                   <SelectValue placeholder="Vault" />
@@ -243,6 +225,7 @@ export const FilterOverview = ({
                 })}
                 value={selectedPointType}
                 onValueChange={(value) => setSelectedPointType(value ?? "all")}
+                disabled={isApplying}
               >
                 <SelectTrigger className="">
                   <SelectValue placeholder="Point Type" />
@@ -278,6 +261,7 @@ export const FilterOverview = ({
             </FieldLabel>
             <Popover>
               <PopoverTrigger
+                disabled={isApplying}
                 render={
                   <Button
                     variant="outline"
@@ -310,6 +294,17 @@ export const FilterOverview = ({
               </PopoverContent>
             </Popover>
           </Field>
+
+          <div className="flex gap-1 justify-end items-end">
+            <Button
+              variant="outline"
+              disabled={isApplying}
+              onClick={handleReset}
+            >
+              <RefreshCw className="size-4" />
+              Reset Filter
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>

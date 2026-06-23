@@ -1,5 +1,4 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toFixedNumber, withCommas } from "@/lib/number";
 import { DashboardOverviewAttributes } from "@/types/dashboard";

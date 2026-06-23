@@ -1,4 +1,4 @@
-import { Filter, Loader2, RefreshCw, SearchIcon } from "lucide-react";
+import { RefreshCw, SearchIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldLabel } from "@/components/ui/field";
 import {
@@ -13,9 +13,9 @@ import type {
   FilterPartnerResource,
   FilterVaultResource,
 } from "@/types/filters";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { format } from "date-fns";
+import { format, subDays } from "date-fns";
 import { type DateRange } from "react-day-picker";
 import {
   Popover,
@@ -57,11 +57,21 @@ export const FilterUserCampaignPointHistory = ({
   onApply,
   onReset,
 }: FilterUserCampaignPointHistoryProps) => {
-  const [date, setDate] = useState<DateRange | undefined>(undefined);
+  const [date, setDate] = useState<DateRange | undefined>({
+    from: new Date(),
+    to: subDays(new Date(), 7),
+  });
   const [userAddress, setUserAddress] = useState("");
   const [selectedCampaign, setSelectedCampaign] = useState<string>("all");
   const [selectedPartner, setSelectedPartner] = useState<string>("all");
   const [selectedVault, setSelectedVault] = useState<string>("all");
+
+  // Debounce amount để tránh spam
+  const [debouncedSearch, setDebouncedSearch] = useState(userAddress);
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(userAddress), 600);
+    return () => clearTimeout(t);
+  }, [userAddress]);
 
   const itemsSelectPartner = useMemo(() => {
     return (
@@ -90,16 +100,27 @@ export const FilterUserCampaignPointHistory = ({
     );
   }, [vaultsSelect]);
 
-  const handleApply = () => {
+  const handleApply = useCallback(() => {
     onApply({
-      userAddress,
+      userAddress: debouncedSearch,
       selectedCampaign,
       selectedPartner,
       selectedVault,
       dateFrom: date?.from?.toISOString() || undefined,
       dateTo: date?.to?.toISOString() || undefined,
     });
-  };
+  }, [
+    debouncedSearch,
+    selectedCampaign,
+    selectedPartner,
+    selectedVault,
+    date,
+    onApply,
+  ]);
+
+  useEffect(() => {
+    handleApply();
+  }, [handleApply]);
 
   const handleReset = () => {
     setUserAddress("");
@@ -126,6 +147,7 @@ export const FilterUserCampaignPointHistory = ({
                   handleApply();
                 }}
                 placeholder="Search by user address..."
+                disabled={isApplying}
               />
               <InputGroupAddon align="inline-end">
                 <SearchIcon className="text-muted-foreground" />
@@ -137,18 +159,10 @@ export const FilterUserCampaignPointHistory = ({
             <Button
               variant="outline"
               disabled={isApplying}
-              onClick={handleApply}
+              onClick={handleReset}
             >
-              {isApplying ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <Filter className="size-4" />
-              )}
-              Filters
-            </Button>
-            <Button variant="ghost" disabled={isApplying} onClick={handleReset}>
               <RefreshCw className="size-4" />
-              Reset
+              Reset Filter
             </Button>
           </div>
         </CardTitle>
@@ -168,6 +182,7 @@ export const FilterUserCampaignPointHistory = ({
                 onValueChange={setSelectedCampaign}
                 placeholder="Campaign"
                 searchPlaceholder="Search campaign..."
+                disabled={isApplying}
               />
             )}
           </Field>
@@ -185,6 +200,7 @@ export const FilterUserCampaignPointHistory = ({
                 onValueChange={setSelectedPartner}
                 placeholder="Partner"
                 searchPlaceholder="Search partner..."
+                disabled={isApplying}
               />
             )}
           </Field>
@@ -202,6 +218,7 @@ export const FilterUserCampaignPointHistory = ({
                 onValueChange={setSelectedVault}
                 placeholder="Vault"
                 searchPlaceholder="Search vault..."
+                disabled={isApplying}
               />
             )}
           </Field>
@@ -215,6 +232,7 @@ export const FilterUserCampaignPointHistory = ({
             </FieldLabel>
             <Popover>
               <PopoverTrigger
+                disabled={isApplying}
                 render={
                   <Button
                     variant="outline"

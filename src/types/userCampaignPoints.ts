@@ -53,3 +53,25 @@ export type ImportUserCampaignPointsResponse = {
   };
   message?: string;
 };
+
+export type CampaignUserPointsAttributes = {
+  "user_address": string;
+  "total_points": string;
+  "percentage": string;
+};
+
+export type CampaignUserPointsResource = {
+  id: string;
+  type: "campaign-user-points";
+  attributes: CampaignUserPointsAttributes;
+};
+
+export type CampaignUserPointsResponse = {
+  data: CampaignUserPointsResource[];
+  meta: {
+    current_page: number;
+    per_page: number;
+    total: number;
+    total_pages: number;
+  };
+};

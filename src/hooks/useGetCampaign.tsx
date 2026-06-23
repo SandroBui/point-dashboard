@@ -1,7 +1,8 @@
 import { exportCampaigns, getCampaigns } from "@/api/campaigns";
 import { ROW_PER_PAGE } from "@/constants/dashboard";
 import { downloadBlob } from "@/lib/download";
-import { useState } from "react";
+import { subDays } from "date-fns";
+import { useCallback, useState } from "react";
 
 import useSWR from "swr";
 
@@ -19,7 +20,10 @@ export default function useGetCampaigns() {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(ROW_PER_PAGE[1]);
 
-  const [appliedFilters, setAppliedFilters] = useState<CampaignFilters>({});
+  const [appliedFilters, setAppliedFilters] = useState<CampaignFilters>({
+    dateFrom: new Date().toISOString(),
+    dateTo: subDays(new Date(), 7).toISOString(),
+  });
   const [isExporting, setIsExporting] = useState(false);
 
   const {
@@ -72,55 +76,58 @@ export default function useGetCampaigns() {
     setPage(1);
   };
 
-  const applyFilters = ({
-    selectedPartner,
-    selectedStatus,
-    selectedVault,
-    search,
-    dateFrom,
-    dateTo,
-    selectedPointType,
-  }: {
-    selectedPartner: string;
-    selectedStatus: string;
-    selectedVault: string;
-    search: string;
-    dateFrom?: string;
-    dateTo?: string;
-    selectedPointType?: string;
-  }) => {
-    const normalizedPartner =
-      selectedPartner && selectedPartner !== "all"
-        ? selectedPartner
-        : undefined;
-    const normalizedStatus =
-      selectedStatus && selectedStatus !== "all" ? selectedStatus : undefined;
-    const normalizedVaultId =
-      selectedVault && selectedVault !== "all" ? selectedVault : undefined;
-    const normalizedSearch = search.trim() || undefined;
-    const normalizedDateFrom = dateFrom || undefined;
-    const normalizedDateTo = dateTo || undefined;
-    const normalizedType =
-      selectedPointType && selectedPointType !== "all"
-        ? selectedPointType
-        : undefined;
+  const applyFilters = useCallback(
+    ({
+      selectedPartner,
+      selectedStatus,
+      selectedVault,
+      search,
+      dateFrom,
+      dateTo,
+      selectedPointType,
+    }: {
+      selectedPartner: string;
+      selectedStatus: string;
+      selectedVault: string;
+      search: string;
+      dateFrom?: string;
+      dateTo?: string;
+      selectedPointType?: string;
+    }) => {
+      const normalizedPartner =
+        selectedPartner && selectedPartner !== "all"
+          ? selectedPartner
+          : undefined;
+      const normalizedStatus =
+        selectedStatus && selectedStatus !== "all" ? selectedStatus : undefined;
+      const normalizedVaultId =
+        selectedVault && selectedVault !== "all" ? selectedVault : undefined;
+      const normalizedSearch = search.trim() || undefined;
+      const normalizedDateFrom = dateFrom || undefined;
+      const normalizedDateTo = dateTo || undefined;
+      const normalizedType =
+        selectedPointType && selectedPointType !== "all"
+          ? selectedPointType
+          : undefined;
 
-    setAppliedFilters({
-      partner: normalizedPartner,
-      search: normalizedSearch,
-      status: normalizedStatus,
-      vaultId: normalizedVaultId,
-      dateFrom: normalizedDateFrom,
-      dateTo: normalizedDateTo,
-      type: normalizedType,
-    });
-    setPage(1);
-  };
+      setAppliedFilters({
+        partner: normalizedPartner,
+        search: normalizedSearch,
+        status: normalizedStatus,
+        vaultId: normalizedVaultId,
+        dateFrom: normalizedDateFrom,
+        dateTo: normalizedDateTo,
+        type: normalizedType,
+      });
+      setPage(1);
+    },
+    [],
+  );
 
-  const resetFilters = () => {
+  const resetFilters = useCallback(() => {
     setAppliedFilters({});
     setPage(1);
-  };
+  }, []);
 
   const handleExport = async () => {
     if (isExporting) return;

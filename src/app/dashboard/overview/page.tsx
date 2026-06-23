@@ -1,5 +1,5 @@
 "use client";
-import { Copy, Database } from "lucide-react";
+import { Database } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,15 +17,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+
 import useGetDashboardOverview from "@/hooks/useGetDashboardOverview";
-import { copyTextToClipboard, truncateAddress } from "@/lib/string";
 import { DashboardOverviewAttributes } from "@/types/dashboard";
-import { useState } from "react";
 
 import { StatsOverview } from "./components/stats";
 import { TableFooter } from "./components/table-footer";
@@ -39,7 +33,6 @@ export default function OverviewPage() {
     isLoadingOverview,
     topVaults,
     topPartners,
-    topUsers,
     applyFilters,
     resetFilters,
     mutationRefreshData,
@@ -47,17 +40,6 @@ export default function OverviewPage() {
 
   const { listPartners, isLoadingFilter, listVaults, listFilterPointTypes } =
     useGetFilter();
-
-  const [currentAddressCopy, setCurrentAddressCopy] = useState("");
-
-  const copyAddressToClipboard = (address: string) => {
-    copyTextToClipboard(address, () => {
-      setCurrentAddressCopy(address);
-      setTimeout(() => {
-        setCurrentAddressCopy("");
-      }, 2000);
-    });
-  };
 
   return (
     <div className="space-y-6">
@@ -75,10 +57,7 @@ export default function OverviewPage() {
       <FilterOverview
         isLoading={isLoadingFilter}
         isApplying={
-          topVaults.isLoading ||
-          topPartners.isLoading ||
-          topUsers.isLoading ||
-          isLoadingOverview
+          topVaults.isLoading || topPartners.isLoading || isLoadingOverview
         }
         partnersSelect={listPartners ?? []}
         onApply={applyFilters}
@@ -244,97 +223,6 @@ export default function OverviewPage() {
               onNextPage={topPartners.handleNextPage}
               onPreviousPage={topPartners.handlePreviousPage}
               onChangeLimit={topPartners.handleChangeLimit}
-            />
-          </CardContent>
-        </Card>
-
-        {/* Top Users */}
-        <Card className="xl:col-span-2">
-          <CardHeader>
-            <CardTitle className="text-sm font-semibold">
-              Top Points by User
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-12">#</TableHead>
-                  <TableHead>User</TableHead>
-                  <TableHead className="text-right">Total Points</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody
-                isLoading={topUsers.isLoading}
-                skeletonRows={topUsers.limit}
-              >
-                {topUsers.data?.data?.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={3} className="p-8">
-                      <Empty className="mx-auto max-w-xl">
-                        <EmptyHeader>
-                          <EmptyMedia variant="icon">
-                            <Database />
-                          </EmptyMedia>
-                          <EmptyTitle>No data</EmptyTitle>
-                        </EmptyHeader>
-                      </Empty>
-                    </TableCell>
-                  </TableRow>
-                )}
-
-                {topUsers.data?.data &&
-                  topUsers.data.data.length > 0 &&
-                  topUsers.data.data.map(({ id, attributes }, index) => (
-                    <TableRow key={id}>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {(topUsers.page - 1) * topUsers.limit + index + 1}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <p className="truncate font-medium text-blue-400">
-                            {truncateAddress(attributes.user)}
-                          </p>
-                          <Tooltip
-                            open={currentAddressCopy === attributes.user}
-                          >
-                            <TooltipTrigger
-                              render={
-                                <Copy
-                                  className="size-4 cursor-pointer"
-                                  onClick={() =>
-                                    copyAddressToClipboard(attributes.user)
-                                  }
-                                />
-                              }
-                            />
-                            <TooltipContent>
-                              <p>Address successfully copied!</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right text-sm">
-                        {withCommas(
-                          toFixedNumber(
-                            Number(attributes.total_points || 0),
-                            2,
-                          ),
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-              </TableBody>
-            </Table>
-
-            <TableFooter
-              page={topUsers.page}
-              limit={topUsers.limit}
-              totalPages={topUsers.totalPages}
-              onChangePage={topUsers.handleOnchangePage}
-              onNextPage={topUsers.handleNextPage}
-              onPreviousPage={topUsers.handlePreviousPage}
-              onChangeLimit={topUsers.handleChangeLimit}
             />
           </CardContent>
         </Card>

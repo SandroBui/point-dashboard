@@ -1,5 +1,5 @@
-import { Filter, Loader2, RefreshCw } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { RefreshCw } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
 import type {
@@ -7,9 +7,9 @@ import type {
   FilterPartnerResource,
   FilterVaultResource,
 } from "@/types/filters";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { format } from "date-fns";
+import { format, subDays } from "date-fns";
 import { type DateRange } from "react-day-picker";
 import {
   Popover,
@@ -50,7 +50,10 @@ export const FilterPointDistributionHistory = ({
   onApply,
   onReset,
 }: FilterPointDistributionHistoryProps) => {
-  const [date, setDate] = useState<DateRange | undefined>(undefined);
+  const [date, setDate] = useState<DateRange | undefined>({
+    from: new Date(),
+    to: subDays(new Date(), 7),
+  });
   const [selectedCampaign, setSelectedCampaign] = useState<string>("all");
   const [selectedPartner, setSelectedPartner] = useState<string>("all");
   const [selectedVault, setSelectedVault] = useState<string>("all");
@@ -82,7 +85,7 @@ export const FilterPointDistributionHistory = ({
     );
   }, [vaultsSelect]);
 
-  const handleApply = () => {
+  const handleApply = useCallback(() => {
     onApply({
       selectedCampaign,
       selectedPartner,
@@ -90,7 +93,11 @@ export const FilterPointDistributionHistory = ({
       dateFrom: date?.from?.toISOString() || undefined,
       dateTo: date?.to?.toISOString() || undefined,
     });
-  };
+  }, [selectedCampaign, selectedPartner, selectedVault, date, onApply]);
+
+  useEffect(() => {
+    handleApply();
+  }, [handleApply]);
 
   const handleReset = () => {
     setSelectedCampaign("all");
@@ -102,31 +109,8 @@ export const FilterPointDistributionHistory = ({
 
   return (
     <Card>
-      <CardHeader className="pb-0">
-        <CardTitle className="flex items-center justify-between text-sm font-semibold text-muted-foreground">
-          <span>Filters</span>
-          <div className="flex flex-wrap items-center justify-end gap-2">
-            <Button
-              variant="outline"
-              disabled={isApplying}
-              onClick={handleApply}
-            >
-              {isApplying ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <Filter className="size-4" />
-              )}
-              Apply
-            </Button>
-            <Button variant="ghost" disabled={isApplying} onClick={handleReset}>
-              <RefreshCw className="size-4" />
-              Reset
-            </Button>
-          </div>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="pt-4">
-        <div className="grid gap-3 lg:grid-cols-4">
+      <CardContent className="">
+        <div className="grid gap-3 lg:grid-cols-5">
           <Field className="lg:col-span-1">
             <FieldLabel className="text-xs font-medium text-muted-foreground">
               Campaign
@@ -140,6 +124,7 @@ export const FilterPointDistributionHistory = ({
                 onValueChange={setSelectedCampaign}
                 placeholder="Campaign"
                 searchPlaceholder="Search campaign..."
+                disabled={isApplying}
               />
             )}
           </Field>
@@ -157,6 +142,7 @@ export const FilterPointDistributionHistory = ({
                 onValueChange={setSelectedPartner}
                 placeholder="Partner"
                 searchPlaceholder="Search partner..."
+                disabled={isApplying}
               />
             )}
           </Field>
@@ -174,6 +160,7 @@ export const FilterPointDistributionHistory = ({
                 onValueChange={setSelectedVault}
                 placeholder="Vault"
                 searchPlaceholder="Search vault..."
+                disabled={isApplying}
               />
             )}
           </Field>
@@ -187,6 +174,7 @@ export const FilterPointDistributionHistory = ({
             </FieldLabel>
             <Popover>
               <PopoverTrigger
+                disabled={isApplying}
                 render={
                   <Button
                     variant="outline"
@@ -219,6 +207,16 @@ export const FilterPointDistributionHistory = ({
               </PopoverContent>
             </Popover>
           </Field>
+          <div className="flex gap-1 justify-end items-end">
+            <Button
+              variant="outline"
+              disabled={isApplying}
+              onClick={handleReset}
+            >
+              <RefreshCw className="size-4" />
+              Reset Filter
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>

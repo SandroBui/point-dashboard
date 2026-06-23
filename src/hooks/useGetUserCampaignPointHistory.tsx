@@ -9,14 +9,18 @@ import type {
   HistorySortOrder,
   UserCampaignPointHistoryFilters,
 } from "@/types/userCampaignPointHistory";
-import { useState } from "react";
+import { subDays } from "date-fns";
+import { useCallback, useState } from "react";
 import useSWR from "swr";
 
 export default function useGetUserCampaignPointHistory() {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(ROW_PER_PAGE[1]);
   const [appliedFilters, setAppliedFilters] =
-    useState<UserCampaignPointHistoryFilters>({});
+    useState<UserCampaignPointHistoryFilters>({
+      dateFrom: new Date().toISOString(),
+      dateTo: subDays(new Date(), 7).toISOString(),
+    });
   const [sortField, setSortField] = useState<HistorySortField>("created_at");
   const [sortOrder, setSortOrder] = useState<HistorySortOrder>("desc");
   const [isExporting, setIsExporting] = useState(false);
@@ -64,43 +68,46 @@ export default function useGetUserCampaignPointHistory() {
     setPage(1);
   };
 
-  const applyFilters = ({
-    userAddress,
-    selectedCampaign,
-    selectedPartner,
-    selectedVault,
-    dateFrom,
-    dateTo,
-  }: {
-    userAddress: string;
-    selectedCampaign: string;
-    selectedPartner: string;
-    selectedVault: string;
-    dateFrom?: string;
-    dateTo?: string;
-  }) => {
-    setAppliedFilters({
-      userAddress: userAddress.trim() || undefined,
-      campaignId:
-        selectedCampaign && selectedCampaign !== "all"
-          ? selectedCampaign
-          : undefined,
-      partnerId:
-        selectedPartner && selectedPartner !== "all"
-          ? selectedPartner
-          : undefined,
-      vaultId:
-        selectedVault && selectedVault !== "all" ? selectedVault : undefined,
-      dateFrom: dateFrom || undefined,
-      dateTo: dateTo || undefined,
-    });
-    setPage(1);
-  };
+  const applyFilters = useCallback(
+    ({
+      userAddress,
+      selectedCampaign,
+      selectedPartner,
+      selectedVault,
+      dateFrom,
+      dateTo,
+    }: {
+      userAddress: string;
+      selectedCampaign: string;
+      selectedPartner: string;
+      selectedVault: string;
+      dateFrom?: string;
+      dateTo?: string;
+    }) => {
+      setAppliedFilters({
+        userAddress: userAddress.trim() || undefined,
+        campaignId:
+          selectedCampaign && selectedCampaign !== "all"
+            ? selectedCampaign
+            : undefined,
+        partnerId:
+          selectedPartner && selectedPartner !== "all"
+            ? selectedPartner
+            : undefined,
+        vaultId:
+          selectedVault && selectedVault !== "all" ? selectedVault : undefined,
+        dateFrom: dateFrom || undefined,
+        dateTo: dateTo || undefined,
+      });
+      setPage(1);
+    },
+    [],
+  );
 
-  const resetFilters = () => {
+  const resetFilters = useCallback(() => {
     setAppliedFilters({});
     setPage(1);
-  };
+  }, []);
 
   const toggleSort = (field: HistorySortField) => {
     if (sortField === field) {

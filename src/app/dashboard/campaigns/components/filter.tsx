@@ -1,4 +1,4 @@
-import { Filter, Loader2, RefreshCw, SearchIcon } from "lucide-react";
+import { RefreshCw, SearchIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { Field, FieldLabel } from "@/components/ui/field";
@@ -24,10 +24,10 @@ import type {
   FilterPointTypeResource,
   FilterVaultResource,
 } from "@/types/filters";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 
-import { format } from "date-fns";
+import { format, subDays } from "date-fns";
 import { type DateRange } from "react-day-picker";
 import {
   Popover,
@@ -76,12 +76,22 @@ export const FilterCampaign = ({
   vaultsSelect,
   pointTypesSelect,
 }: FilterCampaignProps) => {
-  const [date, setDate] = useState<DateRange | undefined>(undefined);
+  const [date, setDate] = useState<DateRange | undefined>({
+    from: new Date(),
+    to: subDays(new Date(), 7),
+  });
   const [search, setSearch] = useState("");
   const [selectedPartner, setSelectedPartner] = useState<string>("all");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [selectedVault, setSelectedVault] = useState<string>("all");
   const [selectedPointType, setSelectedPointType] = useState<string>("all");
+
+  // Debounce amount để tránh spam
+  const [debouncedSearch, setDebouncedSearch] = useState(search);
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 600);
+    return () => clearTimeout(t);
+  }, [search]);
 
   const itemsSelectPointType = useMemo(() => {
     return (
@@ -110,17 +120,29 @@ export const FilterCampaign = ({
     );
   }, [vaultsSelect]);
 
-  const handleApply = () => {
+  const handleApply = useCallback(() => {
     onApply({
       selectedPartner,
       selectedStatus,
       selectedVault,
-      search,
+      search: debouncedSearch,
       dateFrom: date?.from?.toISOString() || undefined,
       dateTo: date?.to?.toISOString() || undefined,
       selectedPointType,
     });
-  };
+  }, [
+    onApply,
+    date,
+    debouncedSearch,
+    selectedPartner,
+    selectedStatus,
+    selectedVault,
+    selectedPointType,
+  ]);
+
+  useEffect(() => {
+    handleApply();
+  }, [handleApply]);
 
   const handleReset = () => {
     setSearch("");
@@ -148,6 +170,7 @@ export const FilterCampaign = ({
                   handleApply();
                 }}
                 placeholder="Search..."
+                disabled={isApplying}
               />
               <InputGroupAddon align="inline-end">
                 <SearchIcon className="text-muted-foreground" />
@@ -159,18 +182,10 @@ export const FilterCampaign = ({
             <Button
               variant="outline"
               disabled={isApplying}
-              onClick={handleApply}
+              onClick={handleReset}
             >
-              {isApplying ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <Filter className="size-4" />
-              )}
-              Filters
-            </Button>
-            <Button variant="ghost" disabled={isApplying} onClick={handleReset}>
               <RefreshCw className="size-4" />
-              Reset
+              Reset Filter
             </Button>
           </div>
         </CardTitle>
@@ -189,6 +204,7 @@ export const FilterCampaign = ({
                 items={itemsSelectStatus}
                 value={selectedStatus}
                 onValueChange={(value) => setSelectedStatus(value ?? "all")}
+                disabled={isApplying}
               >
                 <SelectTrigger className="">
                   <SelectValue placeholder="Status" />
@@ -225,6 +241,7 @@ export const FilterCampaign = ({
                 onValueChange={setSelectedPartner}
                 placeholder="Partner"
                 searchPlaceholder="Search partner..."
+                disabled={isApplying}
               />
             )}
           </Field>
@@ -243,6 +260,7 @@ export const FilterCampaign = ({
                 onValueChange={setSelectedVault}
                 placeholder="Vault"
                 searchPlaceholder="Search vault..."
+                disabled={isApplying}
               />
             )}
           </Field>
@@ -261,6 +279,7 @@ export const FilterCampaign = ({
                 onValueChange={setSelectedPointType}
                 placeholder="Point Type"
                 searchPlaceholder="Search point type..."
+                disabled={isApplying}
               />
             )}
           </Field>
@@ -275,6 +294,7 @@ export const FilterCampaign = ({
             </FieldLabel>
             <Popover>
               <PopoverTrigger
+                disabled={isApplying}
                 render={
                   <Button
                     variant="outline"

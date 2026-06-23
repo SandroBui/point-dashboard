@@ -1,12 +1,8 @@
-import { RefreshCw, SearchIcon } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { Field, FieldLabel } from "@/components/ui/field";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from "@/components/ui/input-group";
+
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -22,31 +18,67 @@ import { SearchableSelect } from "@/components/searchable-select";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 
-import { Input } from "@/components/ui/input";
-import { UserCampaignPointsStatus } from "@/constants/userCampaignPoints";
-import { ApplyFiltersUserCampaignPointsType } from "@/hooks/useGetUserCampaignPoints";
 import {
   FilterCampaignResource,
   FilterPartnerResource,
   FilterVaultResource,
 } from "@/types/filters";
-const itemsSelectStatus = [
+import {
+  PointDistributionLogsEvent,
+  PointDistributionLogsLevel,
+} from "@/constants/pointDistributionLogs";
+import { ApplyFiltersPointDistributionLogsType } from "@/hooks/useGetPointDistributionLogs";
+
+const itemsSelectEvent = [
   { label: "All", value: "all" },
-  { label: "Active", value: UserCampaignPointsStatus.Active },
-  { label: "Disabled", value: UserCampaignPointsStatus.Disabled },
+  { label: "Warning", value: PointDistributionLogsEvent.Warning },
+  { label: "Error", value: PointDistributionLogsEvent.Error },
 ];
 
-interface FilterUserCampaignPointsProps {
+const itemsSelectLevel = [
+  { label: "All", value: "all" },
+  {
+    label: "Vault not found",
+    value: PointDistributionLogsLevel.VAULT_NOT_FOUND,
+  },
+  {
+    label: "No active campaign",
+    value: PointDistributionLogsLevel.NO_ACTIVE_CAMPAIGN,
+  },
+  {
+    label: "Total deposit zero",
+    value: PointDistributionLogsLevel.TOTAL_DEPOSIT_ZERO,
+  },
+  {
+    label: "Distribute user failed",
+    value: PointDistributionLogsLevel.DISTRIBUTE_USER_FAILED,
+  },
+  {
+    label: "Indirect pool no balances",
+    value: PointDistributionLogsLevel.INDIRECT_POOL_NO_BALANCES,
+  },
+  {
+    label: "Indirect pool total balance zero",
+    value: PointDistributionLogsLevel.INDIRECT_POOL_TOTAL_BALANCE_ZERO,
+  },
+  {
+    label: "Process point distribution failed",
+    value: PointDistributionLogsLevel.PROCESS_FAILED,
+  },
+  { label: "No new points", value: PointDistributionLogsLevel.NO_NEW_POINTS },
+];
+
+interface FilterPointDistributionLogsProps {
   isLoading: boolean;
   isApplying?: boolean;
   partnersSelect: FilterPartnerResource[];
   vaultsSelect: FilterVaultResource[];
   campaignsSelect: FilterCampaignResource[];
-  onApply: (filters: ApplyFiltersUserCampaignPointsType) => void;
+  onApply: (filters: ApplyFiltersPointDistributionLogsType) => void;
   onReset: () => void;
 }
 
-export const FilterUserCampaignPoints = ({
+export const FilterPointDistributionLogs = ({
   isLoading,
   isApplying,
   partnersSelect,
@@ -54,26 +86,12 @@ export const FilterUserCampaignPoints = ({
   onReset,
   vaultsSelect,
   campaignsSelect,
-}: FilterUserCampaignPointsProps) => {
-  const [search, setSearch] = useState("");
+}: FilterPointDistributionLogsProps) => {
   const [selectedPartner, setSelectedPartner] = useState<string>("all");
-  const [selectedStatus, setSelectedStatus] = useState<string>("all");
+  const [selectedEvent, setSelectedEvent] = useState<string>("all");
+  const [selectedLevel, setSelectedLevel] = useState<string>("all");
   const [selectedCampaign, setSelectedCampaign] = useState<string>("all");
   const [selectedVault, setSelectedVault] = useState<string>("all");
-  const [rangePoints, setRangePoints] = useState<{
-    min: string;
-    max: string;
-  }>({
-    min: "",
-    max: "",
-  });
-
-  // Debounce amount để tránh spam
-  const [debouncedSearch, setDebouncedSearch] = useState(search);
-  useEffect(() => {
-    const t = setTimeout(() => setDebouncedSearch(search), 600);
-    return () => clearTimeout(t);
-  }, [search]);
 
   const itemsSelectPartner = useMemo(() => {
     return (
@@ -105,21 +123,18 @@ export const FilterUserCampaignPoints = ({
   const handleApply = useCallback(() => {
     onApply({
       selectedPartner,
-      selectedStatus,
+      selectedEvent,
+      selectedLevel,
       selectedVault,
-      search: debouncedSearch,
-      minPoints: rangePoints.min,
-      maxPoints: rangePoints.max,
       selectedCampaign,
     });
   }, [
-    debouncedSearch,
-    onApply,
     selectedPartner,
-    selectedStatus,
+    selectedEvent,
+    selectedLevel,
     selectedVault,
     selectedCampaign,
-    rangePoints,
+    onApply,
   ]);
 
   useEffect(() => {
@@ -127,15 +142,11 @@ export const FilterUserCampaignPoints = ({
   }, [handleApply]);
 
   const handleReset = () => {
-    setSearch("");
     setSelectedPartner("all");
-    setSelectedStatus("all");
-    setSelectedVault("all");
+    setSelectedEvent("all");
+    setSelectedLevel("all");
     setSelectedCampaign("all");
-    setRangePoints({
-      min: "",
-      max: "",
-    });
+    setSelectedVault("all");
     onReset();
   };
 
@@ -143,26 +154,7 @@ export const FilterUserCampaignPoints = ({
     <Card>
       <CardHeader className="pb-0">
         <CardTitle className="text-sm font-semibold text-muted-foreground flex justify-between items-center">
-          <Field className="max-w-sm">
-            <InputGroup>
-              <InputGroupInput
-                id="inline-end-input"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key !== "Enter") return;
-                  e.preventDefault();
-                  handleApply();
-                }}
-                placeholder="Search address"
-                disabled={isApplying}
-              />
-              <InputGroupAddon align="inline-end">
-                <SearchIcon className="text-muted-foreground" />
-              </InputGroupAddon>
-            </InputGroup>
-          </Field>
-
+          <p>Filters</p>
           <div className="flex flex-wrap items-center justify-end gap-2">
             <Button
               variant="outline"
@@ -177,27 +169,62 @@ export const FilterUserCampaignPoints = ({
       </CardHeader>
       <CardContent className="pt-4">
         <div className="grid gap-3 lg:grid-cols-5">
-          {/* filter status */}
+          {/* filter event */}
           <Field className="lg:col-span-1">
             <FieldLabel className={"text-xs font-medium text-muted-foreground"}>
-              Status
+              Event
             </FieldLabel>
             {isLoading ? (
               <Skeleton className="h-8" />
             ) : (
               <Select
-                items={itemsSelectStatus}
-                value={selectedStatus}
-                onValueChange={(value) => setSelectedStatus(value ?? "all")}
+                items={itemsSelectEvent}
+                value={selectedEvent}
+                onValueChange={(value) => setSelectedEvent(value ?? "all")}
                 disabled={isApplying}
               >
                 <SelectTrigger className="">
-                  <SelectValue placeholder="Status" />
+                  <SelectValue placeholder="Event" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    <SelectLabel>Status</SelectLabel>
-                    {itemsSelectStatus.map((item) => (
+                    <SelectLabel>Event</SelectLabel>
+                    {itemsSelectEvent.map((item) => (
+                      <SelectItem
+                        key={item.value}
+                        value={item.value}
+                        className={"text-sm"}
+                      >
+                        {item.label}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            )}
+          </Field>
+
+          {/* filter level */}
+          <Field className="lg:col-span-1">
+            <FieldLabel className={"text-xs font-medium text-muted-foreground"}>
+              Level
+            </FieldLabel>
+            {isLoading ? (
+              <Skeleton className="h-8" />
+            ) : (
+              <Select
+                items={itemsSelectLevel}
+                value={selectedLevel}
+                onValueChange={(value) => setSelectedLevel(value ?? "all")}
+                disabled={isApplying}
+              >
+                <SelectTrigger className="">
+                  <SelectValue placeholder="Level" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectLabel>Level</SelectLabel>
+                    {itemsSelectLevel.map((item) => (
                       <SelectItem
                         key={item.value}
                         value={item.value}
@@ -267,50 +294,6 @@ export const FilterUserCampaignPoints = ({
                 disabled={isApplying}
               />
             )}
-          </Field>
-
-          {/* filter range point */}
-          <Field className="lg:col-span-1">
-            <FieldLabel className={"text-xs font-medium text-muted-foreground"}>
-              Points Balance
-            </FieldLabel>
-            <div className="flex items-center">
-              <Input
-                type="number"
-                value={rangePoints?.min}
-                onChange={(e) =>
-                  setRangePoints((prev) => ({
-                    ...prev,
-                    min: e.target.value,
-                  }))
-                }
-                onKeyDown={(e) => {
-                  if (e.key !== "Enter") return;
-                  e.preventDefault();
-                  handleApply();
-                }}
-                placeholder="Min"
-                disabled={isApplying}
-              />
-              {"-"}
-              <Input
-                type="number"
-                value={rangePoints?.max}
-                onChange={(e) =>
-                  setRangePoints((prev) => ({
-                    ...prev,
-                    max: e.target.value,
-                  }))
-                }
-                onKeyDown={(e) => {
-                  if (e.key !== "Enter") return;
-                  e.preventDefault();
-                  handleApply();
-                }}
-                placeholder="Max"
-                disabled={isApplying}
-              />
-            </div>
           </Field>
         </div>
       </CardContent>

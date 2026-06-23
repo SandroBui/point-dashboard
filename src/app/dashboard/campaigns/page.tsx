@@ -279,9 +279,11 @@ export default function CampaignsPage() {
                 campaigns?.data?.map(({ id, attributes }) => (
                   <TableRow key={id}>
                     <TableCell>
-                      <div className="truncate font-medium">
-                        {attributes.name}
-                      </div>
+                      <Link href={`/dashboard/campaigns/${id}`}>
+                        <p className="truncate font-medium text-blue-500">
+                          {attributes.name}
+                        </p>
+                      </Link>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {attributes.partner_name ?? attributes.partner_slug}

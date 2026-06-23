@@ -5,14 +5,18 @@ import {
 import { ROW_PER_PAGE } from "@/constants/dashboard";
 import { downloadBlob } from "@/lib/download";
 import type { PointDistributionHistoryFilters } from "@/types/pointDistributionHistory";
-import { useState } from "react";
+import { subDays } from "date-fns";
+import { useCallback, useState } from "react";
 import useSWR from "swr";
 
 export default function useGetPointDistributionHistory() {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(ROW_PER_PAGE[1]);
   const [appliedFilters, setAppliedFilters] =
-    useState<PointDistributionHistoryFilters>({});
+    useState<PointDistributionHistoryFilters>({
+      dateFrom: new Date().toISOString(),
+      dateTo: subDays(new Date(), 7).toISOString(),
+    });
   const [isExporting, setIsExporting] = useState(false);
 
   const { data: history, isLoading: isLoadingHistory } = useSWR(
@@ -48,40 +52,43 @@ export default function useGetPointDistributionHistory() {
     setPage(1);
   };
 
-  const applyFilters = ({
-    selectedCampaign,
-    selectedPartner,
-    selectedVault,
-    dateFrom,
-    dateTo,
-  }: {
-    selectedCampaign: string;
-    selectedPartner: string;
-    selectedVault: string;
-    dateFrom?: string;
-    dateTo?: string;
-  }) => {
-    setAppliedFilters({
-      campaignId:
-        selectedCampaign && selectedCampaign !== "all"
-          ? selectedCampaign
-          : undefined,
-      partnerId:
-        selectedPartner && selectedPartner !== "all"
-          ? selectedPartner
-          : undefined,
-      vaultId:
-        selectedVault && selectedVault !== "all" ? selectedVault : undefined,
-      dateFrom: dateFrom || undefined,
-      dateTo: dateTo || undefined,
-    });
-    setPage(1);
-  };
+  const applyFilters = useCallback(
+    ({
+      selectedCampaign,
+      selectedPartner,
+      selectedVault,
+      dateFrom,
+      dateTo,
+    }: {
+      selectedCampaign: string;
+      selectedPartner: string;
+      selectedVault: string;
+      dateFrom?: string;
+      dateTo?: string;
+    }) => {
+      setAppliedFilters({
+        campaignId:
+          selectedCampaign && selectedCampaign !== "all"
+            ? selectedCampaign
+            : undefined,
+        partnerId:
+          selectedPartner && selectedPartner !== "all"
+            ? selectedPartner
+            : undefined,
+        vaultId:
+          selectedVault && selectedVault !== "all" ? selectedVault : undefined,
+        dateFrom: dateFrom || undefined,
+        dateTo: dateTo || undefined,
+      });
+      setPage(1);
+    },
+    [],
+  );
 
-  const resetFilters = () => {
+  const resetFilters = useCallback(() => {
     setAppliedFilters({});
     setPage(1);
-  };
+  }, []);
 
   const handleExport = async () => {
     if (isExporting) return;

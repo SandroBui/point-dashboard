@@ -3,14 +3,7 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toFixedNumber, withCommas } from "@/lib/number";
 import { UserCampaignPointsStatsAttributes } from "@/types/userCampaignPoints";
-import {
-  Coins,
-  User,
-  UserCheck,
-  UserX,
-  Users,
-  type LucideIcon,
-} from "lucide-react";
+import { Coins, UserCheck, Users, type LucideIcon } from "lucide-react";
 
 interface StatsUserCampaignPointsProps {
   statsData: UserCampaignPointsStatsAttributes;

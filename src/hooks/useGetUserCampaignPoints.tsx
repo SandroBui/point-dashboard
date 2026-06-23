@@ -5,7 +5,7 @@ import {
 } from "@/api/userCampaignsPoints";
 import { ROW_PER_PAGE } from "@/constants/dashboard";
 import { downloadBlob } from "@/lib/download";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 import useSWR from "swr";
 
@@ -115,47 +115,50 @@ export default function useGetUserCampaignPoints() {
     setPage(1);
   };
 
-  const applyFilters = ({
-    selectedPartner,
-    selectedStatus,
-    selectedVault,
-    search,
-    minPoints,
-    maxPoints,
-    selectedCampaign,
-  }: ApplyFiltersUserCampaignPointsType) => {
-    const normalizedPartner =
-      selectedPartner && selectedPartner !== "all"
-        ? selectedPartner
-        : undefined;
-    const normalizedStatus =
-      selectedStatus && selectedStatus !== "all" ? selectedStatus : undefined;
-    const normalizedVaultId =
-      selectedVault && selectedVault !== "all" ? selectedVault : undefined;
-    const normalizedSearch = search.trim() || undefined;
-    const normalizedMin = minPoints.trim() || undefined;
-    const normalizedMax = maxPoints.trim() || undefined;
-    const normalizedCampaignId =
-      selectedCampaign && selectedCampaign !== "all"
-        ? selectedCampaign
-        : undefined;
+  const applyFilters = useCallback(
+    ({
+      selectedPartner,
+      selectedStatus,
+      selectedVault,
+      search,
+      minPoints,
+      maxPoints,
+      selectedCampaign,
+    }: ApplyFiltersUserCampaignPointsType) => {
+      const normalizedPartner =
+        selectedPartner && selectedPartner !== "all"
+          ? selectedPartner
+          : undefined;
+      const normalizedStatus =
+        selectedStatus && selectedStatus !== "all" ? selectedStatus : undefined;
+      const normalizedVaultId =
+        selectedVault && selectedVault !== "all" ? selectedVault : undefined;
+      const normalizedSearch = search.trim() || undefined;
+      const normalizedMin = minPoints.trim() || undefined;
+      const normalizedMax = maxPoints.trim() || undefined;
+      const normalizedCampaignId =
+        selectedCampaign && selectedCampaign !== "all"
+          ? selectedCampaign
+          : undefined;
 
-    setAppliedFilters({
-      partner: normalizedPartner,
-      search: normalizedSearch,
-      status: normalizedStatus,
-      vaultId: normalizedVaultId,
-      min: normalizedMin,
-      max: normalizedMax,
-      campaignId: normalizedCampaignId,
-    });
-    setPage(1);
-  };
+      setAppliedFilters({
+        partner: normalizedPartner,
+        search: normalizedSearch,
+        status: normalizedStatus,
+        vaultId: normalizedVaultId,
+        min: normalizedMin,
+        max: normalizedMax,
+        campaignId: normalizedCampaignId,
+      });
+      setPage(1);
+    },
+    [],
+  );
 
-  const resetFilters = () => {
+  const resetFilters = useCallback(() => {
     setAppliedFilters({});
     setPage(1);
-  };
+  }, []);
 
   const handleExport = async () => {
     if (isExporting) return;

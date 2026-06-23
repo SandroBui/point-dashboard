@@ -1,14 +1,6 @@
 "use client";
-import {
-  Copy,
-  Database,
-  Download,
-  Loader2,
-  MoreHorizontal,
-  Pencil,
-} from "lucide-react";
+import { Database, Eye } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -19,7 +11,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { FilterUserCampaignPoints } from "./components/filter";
 
 import {
   Pagination,
@@ -42,7 +33,7 @@ import {
 import { ROW_PER_PAGE } from "@/constants/dashboard";
 import { format } from "date-fns";
 import { parseUTCStringToLocalDate } from "@/lib/date";
-import { toFixedNumber, withCommas } from "@/lib/number";
+
 import { cn } from "@/lib/utils";
 import useGetPaginationTokens from "@/hooks/useGetPaginationTokens";
 
@@ -52,106 +43,71 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import useGetUserCampaignPoints from "@/hooks/useGetUserCampaignPoints";
-import { UserCampaignPointsStatsAttributes } from "@/types/userCampaignPoints";
 
-import { copyTextToClipboard, truncateAddress } from "@/lib/string";
-
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { useState } from "react";
-import { StatsUserCampaignPoints } from "./components/stats";
-import { ImportUserCampaignPointsDialog } from "./components/import-dialog";
 import useGetFilter from "@/hooks/useGetFilter";
-import { statusBadgeVariant } from "@/lib/userCampaign";
+import { FilterPointDistributionLogs } from "./components/filter";
+import useGetPointDistributionLogs from "@/hooks/useGetPointDistributionLogs";
+
+import { buttonVariants } from "@/components/ui/button";
+import Link from "next/link";
+import { levelBadgeVariant } from "@/lib/pointDistributionLog";
 
 const itemsSelectRow = ROW_PER_PAGE.map((item) => ({
   label: item,
   value: item,
 }));
 
-export default function UserCampaignPointsPage() {
+export default function PointDistributionLogsPage() {
   const {
     page,
     limit,
     handleChangeLimit,
-    userCampaignPoints,
+    pointDistributionLogs,
     handleOnchangePage,
     handleNextPage,
     handlePreviousPage,
-    isLoadingGetUserCampaignPoints,
+    isLoadingGetPointDistributionLogs,
     applyFilters,
     resetFilters,
-    statsUserCampaignPoints,
-    isLoadingGetStatsUserCampaignPointsStats,
-    handleExport,
-    isExporting,
-    refreshUserCampaignPoints,
-  } = useGetUserCampaignPoints();
+  } = useGetPointDistributionLogs();
   const { listPartners, isLoadingFilter, listVaults, listFilterCampaigns } =
     useGetFilter();
 
-  const totalPages = Math.max(1, userCampaignPoints?.meta?.total_pages ?? 1);
+  const totalPages = Math.max(1, pointDistributionLogs?.meta?.total_pages ?? 1);
   const canGoPrev = page > 1;
   const canGoNext = page < totalPages;
   const paginationTokens = useGetPaginationTokens(page, totalPages);
-
-  const [currentAddressCopy, setCurrentAddressCopy] = useState("");
-
-  const copyAddressToClipboard = (address: string) => {
-    copyTextToClipboard(address, () => {
-      setCurrentAddressCopy(address);
-      setTimeout(() => {
-        setCurrentAddressCopy("");
-      }, 2000);
-    });
-  };
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
-            User Campaign Points
+            Point Distribution Logs
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            View management user points cross all campaigns
+            View point distribution logs cross all campaigns
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <ImportUserCampaignPointsDialog
-            onImported={() => refreshUserCampaignPoints()}
-          />
-        </div>
       </div>
-      <FilterUserCampaignPoints
+      <FilterPointDistributionLogs
         isLoading={isLoadingFilter}
-        isApplying={isLoadingGetUserCampaignPoints}
+        isApplying={isLoadingGetPointDistributionLogs}
         campaignsSelect={listFilterCampaigns}
         partnersSelect={listPartners}
         onApply={applyFilters}
         onReset={resetFilters}
         vaultsSelect={listVaults ?? []}
       />
-      <StatsUserCampaignPoints
-        statsData={
-          statsUserCampaignPoints?.data?.attributes ??
-          ({} as UserCampaignPointsStatsAttributes)
-        }
-        isLoading={isLoadingGetStatsUserCampaignPointsStats}
-      />
 
       <Card>
         <CardHeader className="flex justify-between items-center gap-1">
           <div className="space-y-1">
             <CardTitle className="text-sm font-semibold">
-              Total {userCampaignPoints?.meta?.total ?? 0} users
+              Total {pointDistributionLogs?.meta?.total ?? 0} logs
             </CardTitle>
           </div>
-          <div className="flex items-center gap-2">
+          {/* <div className="flex items-center gap-2">
             <Button
               variant="outline"
               onClick={handleExport}
@@ -164,28 +120,31 @@ export default function UserCampaignPointsPage() {
               )}
               Export
             </Button>
-          </div>
+            <Button variant="outline">
+              <SlidersHorizontal className="size-4" />
+              Columns
+            </Button>
+          </div> */}
         </CardHeader>
         <CardContent className="pt-0">
           <Table className="min-w-262.5">
             <TableHeader>
               <TableRow>
-                <TableHead className="w-85">User</TableHead>
+                <TableHead className="w-85">Vault</TableHead>
                 <TableHead className="w-85">Campaign</TableHead>
                 <TableHead>Partner</TableHead>
-                <TableHead>Vault</TableHead>
-                <TableHead className="w-55">Current Points</TableHead>
-                <TableHead className="w-55">Life Time Earned</TableHead>
-                <TableHead>Last Distribution</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>Level</TableHead>
+                <TableHead>Event</TableHead>
+                <TableHead className="w-55">Message</TableHead>
+                <TableHead>Created At</TableHead>
                 <TableHead className="w-18 text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody
-              isLoading={isLoadingGetUserCampaignPoints}
+              isLoading={isLoadingGetPointDistributionLogs}
               skeletonRows={limit}
             >
-              {userCampaignPoints?.data?.length === 0 && (
+              {pointDistributionLogs?.data?.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={8} className="p-8">
                     <Empty className="mx-auto max-w-xl">
@@ -200,90 +159,54 @@ export default function UserCampaignPointsPage() {
                 </TableRow>
               )}
 
-              {userCampaignPoints?.data &&
-                userCampaignPoints?.data?.length > 0 &&
-                userCampaignPoints?.data?.map(({ id, attributes }) => (
+              {pointDistributionLogs?.data &&
+                pointDistributionLogs?.data?.length > 0 &&
+                pointDistributionLogs?.data?.map(({ id, attributes }) => (
                   <TableRow key={id}>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <p className="truncate font-medium text-blue-400">
-                          {truncateAddress(attributes.user)}
-                        </p>
-                        <Tooltip open={currentAddressCopy === attributes.user}>
-                          <TooltipTrigger
-                            render={
-                              <Copy
-                                className="size-4 cursor-pointer"
-                                onClick={() =>
-                                  copyAddressToClipboard(attributes.user)
-                                }
-                              />
-                            }
-                          />
-                          <TooltipContent>
-                            <p>Address successfully copied!</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </div>
+                    <TableCell className="truncate text-sm text-muted-foreground">
+                      {attributes.vault_name ?? "-"}
                     </TableCell>
                     <TableCell className="truncate text-sm text-muted-foreground">
-                      {attributes.campaign}
+                      {attributes.point_campaign_name ?? "-"}
                     </TableCell>
                     <TableCell className="truncate text-sm text-muted-foreground">
-                      {attributes.partner ?? "-"}
-                    </TableCell>
-                    <TableCell className="truncate text-sm text-muted-foreground">
-                      {attributes.vault}
-                    </TableCell>
-                    <TableCell className="text-right text-sm">
-                      {withCommas(
-                        toFixedNumber(
-                          Number(attributes.current_points) || 0,
-                          2,
-                        ),
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right text-sm">
-                      {withCommas(
-                        toFixedNumber(
-                          Number(attributes.lifetime_points) || 0,
-                          2,
-                        ),
-                      )}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {attributes.last_distribution_time &&
-                        format(
-                          parseUTCStringToLocalDate(
-                            attributes.last_distribution_time,
-                          ),
-                          "MMM dd, yyyy",
-                        )}{" "}
+                      {attributes.partner_name ?? "-"}
                     </TableCell>
                     <TableCell>
                       <Badge
-                        variant={statusBadgeVariant(attributes.status)}
+                        variant={levelBadgeVariant(attributes.level)}
                         className="capitalize"
                       >
-                        {attributes.status.toLowerCase()}
+                        {attributes.level.toLowerCase()}
                       </Badge>
+                    </TableCell>
+                    <TableCell className="truncate text-sm text-muted-foreground">
+                      {attributes.event ?? "-"}
+                    </TableCell>
+                    <TableCell className="truncate text-sm text-muted-foreground">
+                      {attributes.message ?? "-"}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {attributes.created_at &&
+                        format(
+                          parseUTCStringToLocalDate(attributes.created_at),
+                          "MMM dd, yyyy",
+                        )}{" "}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          aria-label="Edit"
+                        <Link
+                          href={`/dashboard/point-distribution-logs/${id}`}
+                          className={cn(
+                            buttonVariants({
+                              variant: "ghost",
+                              size: "icon-sm",
+                            }),
+                          )}
+                          aria-label="View"
                         >
-                          <Pencil className="size-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          aria-label="More actions"
-                        >
-                          <MoreHorizontal className="size-4" />
-                        </Button>
+                          <Eye className="size-4" />
+                        </Link>
                       </div>
                     </TableCell>
                   </TableRow>

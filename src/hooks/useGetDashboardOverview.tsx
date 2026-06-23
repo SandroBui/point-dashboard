@@ -1,11 +1,12 @@
 import {
   getDashboardOverview,
   getTopPartners,
-  getTopUsers,
+  // getTopUsers,
   getTopVaults,
 } from "@/api/dashboard";
 import { ROW_PER_PAGE } from "@/constants/dashboard";
-import { useState } from "react";
+import { subDays } from "date-fns";
+import { useCallback, useState } from "react";
 import useSWR from "swr";
 
 type PaginatedListResponse<T> = {
@@ -13,7 +14,7 @@ type PaginatedListResponse<T> = {
   meta?: { total_pages?: number; total?: number };
 };
 
-type OverviewFilters = {
+export type OverviewFilters = {
   partner?: string;
   vaultId?: string;
   dateFrom?: string;
@@ -95,7 +96,10 @@ function useTopList<T>(
 }
 
 export default function useGetDashboardOverview() {
-  const [appliedFilters, setAppliedFilters] = useState<OverviewFilters>({});
+  const [appliedFilters, setAppliedFilters] = useState<OverviewFilters>({
+    dateFrom: new Date().toISOString(),
+    dateTo: subDays(new Date(), 7).toISOString(),
+  });
 
   const {
     data: overview,
@@ -130,66 +134,54 @@ export default function useGetDashboardOverview() {
     getTopPartners,
     appliedFilters,
   );
-  const topUsers = useTopList(
-    "get-dashboard-top-users",
-    getTopUsers,
-    appliedFilters,
+  // const topUsers = useTopList(
+  //   "get-dashboard-top-users",
+  //   getTopUsers,
+  //   appliedFilters,
+  // );
+
+  const applyFilters = useCallback(
+    ({ partner, vaultId, dateFrom, dateTo, type }: OverviewFilters) => {
+      const normalizedPartner =
+        partner && partner !== "all" ? partner : undefined;
+      const normalizedVaultId =
+        vaultId && vaultId !== "all" ? vaultId : undefined;
+      const normalizedDateFrom = dateFrom || undefined;
+      const normalizedDateTo = dateTo || undefined;
+      const normalizedType = type && type !== "all" ? type : undefined;
+
+      setAppliedFilters({
+        partner: normalizedPartner,
+        vaultId: normalizedVaultId,
+        dateFrom: normalizedDateFrom,
+        dateTo: normalizedDateTo,
+        type: normalizedType,
+      });
+      topVaults.setPage(1);
+      topPartners.setPage(1);
+    },
+    [],
   );
 
-  const applyFilters = ({
-    selectedPartner,
-    selectedVault,
-    dateFrom,
-    dateTo,
-    selectedPointType,
-  }: {
-    selectedPartner: string;
-    selectedVault: string;
-    dateFrom?: string;
-    dateTo?: string;
-    selectedPointType?: string;
-  }) => {
-    const normalizedPartner =
-      selectedPartner && selectedPartner !== "all"
-        ? selectedPartner
-        : undefined;
-    const normalizedVaultId =
-      selectedVault && selectedVault !== "all" ? selectedVault : undefined;
-    const normalizedDateFrom = dateFrom || undefined;
-    const normalizedDateTo = dateTo || undefined;
-    const normalizedType =
-      selectedPointType && selectedPointType !== "all"
-        ? selectedPointType
-        : undefined;
-
-    setAppliedFilters({
-      partner: normalizedPartner,
-      vaultId: normalizedVaultId,
-      dateFrom: normalizedDateFrom,
-      dateTo: normalizedDateTo,
-      type: normalizedType,
-    });
-    topVaults.setPage(1);
-  };
-
-  const resetFilters = () => {
+  const resetFilters = useCallback(() => {
     setAppliedFilters({});
     topVaults.setPage(1);
-  };
+    topPartners.setPage(1);
+  }, []);
 
-  const mutationRefreshData = async () => {
-    await topVaults.mutate();
-    await mutateOverviewData();
-    await topPartners.mutate();
-    await topUsers.mutate();
-  };
+  const mutationRefreshData = useCallback(() => {
+    topVaults.mutate();
+    mutateOverviewData();
+    topPartners.mutate();
+    // topUsers.mutate();
+  }, []);
 
   return {
     overview,
     isLoadingOverview,
     topVaults,
     topPartners,
-    topUsers,
+    // topUsers,
     applyFilters,
     resetFilters,
     appliedFilters,

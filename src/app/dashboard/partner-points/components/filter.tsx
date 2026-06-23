@@ -1,4 +1,4 @@
-import { Filter, Loader2, RefreshCw, SearchIcon } from "lucide-react";
+import { RefreshCw, SearchIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { Field, FieldLabel } from "@/components/ui/field";
@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/select";
 import { SearchableSelect } from "@/components/searchable-select";
 import type { FilterVaultResource } from "@/types/filters";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const itemsSelectStatus = [
@@ -55,6 +55,13 @@ export const FilterPartnerPoint = ({
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [selectedVault, setSelectedVault] = useState<string>("all");
 
+  // Debounce amount để tránh spam
+  const [debouncedSearch, setDebouncedSearch] = useState(search);
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 600);
+    return () => clearTimeout(t);
+  }, [search]);
+
   const itemsSelectVault = useMemo(() => {
     return (
       vaultsSelect?.map((item) => ({
@@ -64,13 +71,17 @@ export const FilterPartnerPoint = ({
     );
   }, [vaultsSelect]);
 
-  const handleApply = () => {
+  const handleApply = useCallback(() => {
     onApply({
       selectedStatus,
       selectedVault,
-      search,
+      search: debouncedSearch,
     });
-  };
+  }, [debouncedSearch, selectedStatus, selectedVault, onApply]);
+
+  useEffect(() => {
+    handleApply();
+  }, [handleApply]);
 
   const handleReset = () => {
     setSearch("");
@@ -95,6 +106,7 @@ export const FilterPartnerPoint = ({
                   handleApply();
                 }}
                 placeholder="Search by name or slug..."
+                disabled={isApplying}
               />
               <InputGroupAddon align="inline-end">
                 <SearchIcon className="text-muted-foreground" />
@@ -106,18 +118,10 @@ export const FilterPartnerPoint = ({
             <Button
               variant="outline"
               disabled={isApplying}
-              onClick={handleApply}
+              onClick={handleReset}
             >
-              {isApplying ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <Filter className="size-4" />
-              )}
-              Filters
-            </Button>
-            <Button variant="ghost" disabled={isApplying} onClick={handleReset}>
               <RefreshCw className="size-4" />
-              Reset
+              Reset Filter
             </Button>
           </div>
         </CardTitle>
@@ -136,6 +140,7 @@ export const FilterPartnerPoint = ({
                 items={itemsSelectStatus}
                 value={selectedStatus}
                 onValueChange={(value) => setSelectedStatus(value ?? "all")}
+                disabled={isApplying}
               >
                 <SelectTrigger className="">
                   <SelectValue placeholder="Status" />
@@ -172,6 +177,7 @@ export const FilterPartnerPoint = ({
                 onValueChange={setSelectedVault}
                 placeholder="Vault"
                 searchPlaceholder="Search vault..."
+                disabled={isApplying}
               />
             )}
           </Field>

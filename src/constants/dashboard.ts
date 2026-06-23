@@ -5,10 +5,7 @@ import {
     ClipboardList,
     FileText,
     LayoutDashboard,
-    Settings,
-    Shield,
-    Users,
-    Vault,
+    LogsIcon,
     Waypoints,
 } from "lucide-react";
 
@@ -57,17 +54,23 @@ export const navGroups: NavGroup[] = [
             },
         ],
     },
-    // {
-    //     title: "Distribution Management",
-    //     items: [
-    //         { title: "Distributions", href: "/dashboard/distributions", icon: Users },
-    //         {
-    //             title: "Backfill Jobs",
-    //             href: "/dashboard/backfill-jobs",
-    //             icon: Shield,
-    //         },
-    //     ],
-    // },
+    {
+        title: "Distribution Management",
+        items: [
+            // { title: "Distributions", href: "/dashboard/distributions", icon: Users },
+            // {
+            //     title: "Backfill Jobs",
+            //     href: "/dashboard/backfill-jobs",
+            //     icon: Shield,
+            // },
+            {
+                title: "Point Distribution Logs",
+                href: "/dashboard/point-distribution-logs",
+                icon: LogsIcon,
+            },
+
+        ],
+    },
     // {
     //     title: "System",
     //     items: [
