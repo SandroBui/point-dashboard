@@ -1,13 +1,8 @@
 "use client";
+import { Database, Pencil, Plus } from "lucide-react";
+import { useState } from "react";
 
-import {
-  ArrowDown,
-  ArrowUp,
-  ArrowUpDown,
-  Database,
-  Download,
-  Loader2,
-} from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -17,6 +12,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { FilterPartnerPoint } from "./components/filter";
+import { PartnerPointSheet } from "./components/partner-point-sheet";
+
 import {
   Pagination,
   PaginationContent,
@@ -26,6 +25,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+
 import {
   Select,
   SelectContent,
@@ -34,159 +34,115 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
 import { ROW_PER_PAGE } from "@/constants/dashboard";
-import useGetUserCampaignPointHistory from "@/hooks/useGetUserCampaignPointHistory";
-import useGetPaginationTokens from "@/hooks/useGetPaginationTokens";
-import { FilterUserCampaignPointHistory } from "./components/filter";
-import type { HistorySortField } from "@/types/userCampaignPointHistory";
 import { format } from "date-fns";
 import { parseUTCStringToLocalDate } from "@/lib/date";
-import { toFixedNumber, withCommas } from "@/lib/number";
 import { cn } from "@/lib/utils";
+import useGetPaginationTokens from "@/hooks/useGetPaginationTokens";
+import useGetPartnerPoints from "@/hooks/useGetPartnerPoints";
+import type { PartnerPointResource } from "@/types/partnerPoint";
+
 import {
   Empty,
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import useGetFilter from "@/hooks/useGetFilter";
 
 const itemsSelectRow = ROW_PER_PAGE.map((item) => ({
-  label: `${item.toString()}`,
-  value: item.toString(),
+  label: item,
+  value: item,
 }));
 
-function SortableHeader({
-  label,
-  field,
-  sortField,
-  sortOrder,
-  onSort,
-  className,
-}: {
-  label: string;
-  field: HistorySortField;
-  sortField: HistorySortField;
-  sortOrder: "asc" | "desc";
-  onSort: (field: HistorySortField) => void;
-  className?: string;
-}) {
-  const isActive = sortField === field;
-  const Icon = isActive
-    ? sortOrder === "asc"
-      ? ArrowUp
-      : ArrowDown
-    : ArrowUpDown;
-
-  return (
-    <TableHead className={className}>
-      <Button
-        variant="ghost"
-        size="sm"
-        className="-ml-3 h-8 gap-1 font-medium"
-        onClick={() => onSort(field)}
-      >
-        {label}
-        <Icon className="size-3.5" />
-      </Button>
-    </TableHead>
-  );
-}
-
-export default function UserCampaignPointsHistoryPage() {
+export default function PartnerPointsPage() {
   const {
     page,
     limit,
-    history,
-    sortField,
-    sortOrder,
     handleChangeLimit,
+    partnerPoints,
     handleOnchangePage,
     handleNextPage,
     handlePreviousPage,
-    isLoadingHistory,
+    isLoadingGetPartnerPoints,
+    isLoadingFilter,
     applyFilters,
     resetFilters,
-    toggleSort,
-    handleExport,
-    isExporting,
-  } = useGetUserCampaignPointHistory();
-  const { listPartners, isLoadingFilter, listVaults, listFilterCampaigns } =
-    useGetFilter();
+    listVaults,
+    mutatePartnerPoints,
+  } = useGetPartnerPoints();
 
-  const totalPages = Math.max(1, history?.meta?.total_pages ?? 1);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [editing, setEditing] = useState<PartnerPointResource | null>(null);
+
+  const totalPages = Math.max(1, partnerPoints?.meta?.total_pages ?? 1);
   const canGoPrev = page > 1;
   const canGoNext = page < totalPages;
   const paginationTokens = useGetPaginationTokens(page, totalPages);
 
+  const handleCreate = () => {
+    setEditing(null);
+    setSheetOpen(true);
+  };
+
+  const handleEdit = (partnerPoint: PartnerPointResource) => {
+    setEditing(partnerPoint);
+    setSheetOpen(true);
+  };
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          User Campaign Points History
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          View point changes per user and campaign over time
-        </p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Partners Source Management
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Manage partner sources and their configurations
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button onClick={handleCreate}>
+            <Plus className="size-4" />
+            Create Partner Source
+          </Button>
+        </div>
       </div>
-
-      <FilterUserCampaignPointHistory
+      <FilterPartnerPoint
         isLoading={isLoadingFilter}
-        isApplying={isLoadingHistory}
-        partnersSelect={listPartners ?? []}
-        campaignsSelect={listFilterCampaigns ?? []}
-        vaultsSelect={listVaults ?? []}
+        isApplying={isLoadingGetPartnerPoints}
         onApply={applyFilters}
         onReset={resetFilters}
+        vaultsSelect={listVaults ?? []}
       />
-
       <Card>
-        <CardHeader className="flex items-center justify-between gap-1">
-          <CardTitle className="text-sm font-semibold">
-            Total {withCommas(history?.meta?.total ?? 0)} records
-          </CardTitle>
-          <Button
-            variant="outline"
-            onClick={handleExport}
-            disabled={isExporting}
-          >
-            {isExporting ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <Download className="size-4" />
-            )}
-            Export
-          </Button>
+        <CardHeader className="flex justify-between items-center gap-1">
+          <div className="space-y-1">
+            <CardTitle className="text-sm font-semibold">
+              Total {partnerPoints?.meta?.total ?? 0} partner points
+            </CardTitle>
+          </div>
         </CardHeader>
         <CardContent className="pt-0">
-          <Table className="min-w-200">
+          <Table className="min-w-237.5">
             <TableHeader>
               <TableRow>
-                <TableHead className="w-45">User</TableHead>
-                <TableHead>Campaign</TableHead>
-                <SortableHeader
-                  label="Points Delta"
-                  field="points_delta"
-                  sortField={sortField}
-                  sortOrder={sortOrder}
-                  onSort={toggleSort}
-                  className="text-right"
-                />
-                <TableHead>Note</TableHead>
-                <SortableHeader
-                  label="Created At"
-                  field="created_at"
-                  sortField={sortField}
-                  sortOrder={sortOrder}
-                  onSort={toggleSort}
-                />
+                <TableHead className="text-center">No.</TableHead>
+                <TableHead className="w-64">Name</TableHead>
+                <TableHead>Slug</TableHead>
+                <TableHead>Vault</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Exposure</TableHead>
+                <TableHead>Updated</TableHead>
+                <TableHead className="w-18 text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody isLoading={isLoadingHistory} skeletonRows={limit}>
-              {history?.data?.length === 0 && (
+            <TableBody
+              isLoading={isLoadingGetPartnerPoints}
+              skeletonRows={limit}
+            >
+              {partnerPoints?.data?.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} className="p-8">
+                  <TableCell colSpan={8} className="p-8">
                     <Empty className="mx-auto max-w-xl">
                       <EmptyHeader>
                         <EmptyMedia variant="icon">
@@ -199,44 +155,58 @@ export default function UserCampaignPointsHistoryPage() {
                 </TableRow>
               )}
 
-              {history?.data &&
-                history.data.length > 0 &&
-                history.data.map(({ id, attributes }) => {
-                  const delta = Number(attributes.points_delta);
-                  const isPositive = delta >= 0;
-
+              {partnerPoints?.data &&
+                partnerPoints?.data?.length > 0 &&
+                partnerPoints?.data?.map((partnerPoint, index) => {
+                  const { id, attributes } = partnerPoint;
                   return (
                     <TableRow key={id}>
-                      <TableCell>
-                        <div
-                          className="max-w-45 truncate font-mono text-sm"
-                          title={attributes.user}
-                        >
-                          {attributes.user}
-                        </div>
+                      <TableCell className="text-center">
+                        {(page - 1) * limit + index + 1}
                       </TableCell>
                       <TableCell>
                         <div className="truncate font-medium">
-                          {attributes.campaign}
+                          {attributes.name}
                         </div>
                       </TableCell>
-                      <TableCell
-                        className={cn(
-                          "text-right text-sm font-medium tabular-nums",
-                          isPositive ? "text-emerald-600" : "text-red-600",
-                        )}
-                      >
-                        {isPositive ? "+" : ""}
-                        {withCommas(toFixedNumber(delta, 6))}
+                      <TableCell className="text-sm text-muted-foreground">
+                        {attributes.slug}
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
-                        {attributes.note ?? "—"}
+                        {attributes.vault_name ?? "-"}
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={attributes.is_active ? "success" : "muted"}
+                        >
+                          {attributes.is_active ? "Active" : "Inactive"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={attributes.is_exposure ? "success" : "muted"}
+                        >
+                          {attributes.is_exposure ? "Yes" : "No"}
+                        </Badge>
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
-                        {format(
-                          parseUTCStringToLocalDate(attributes.created_at),
-                          "MMM dd, yyyy HH:mm",
-                        )}
+                        {attributes.updated_at &&
+                          format(
+                            parseUTCStringToLocalDate(attributes.updated_at),
+                            "MMM dd, yyyy",
+                          )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            aria-label="Edit"
+                            onClick={() => handleEdit(partnerPoint)}
+                          >
+                            <Pencil className="size-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   );
@@ -245,16 +215,16 @@ export default function UserCampaignPointsHistoryPage() {
           </Table>
 
           <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex shrink-0 items-center gap-2">
-              <p>Rows per page</p>
+            <div className="flex gap-2 items-center shrink-0">
+              <p className="">Rows per page</p>
               <Select
                 items={itemsSelectRow}
                 onValueChange={(newLimit) =>
                   handleChangeLimit(Number(newLimit))
                 }
-                value={String(limit)}
+                value={limit}
               >
-                <SelectTrigger>
+                <SelectTrigger className="">
                   <SelectValue placeholder="Rows per page" />
                 </SelectTrigger>
                 <SelectContent>
@@ -263,7 +233,7 @@ export default function UserCampaignPointsHistoryPage() {
                       <SelectItem
                         key={item.value}
                         value={item.value}
-                        className="text-sm"
+                        className={"text-sm"}
                       >
                         {item.label}
                       </SelectItem>
@@ -333,6 +303,14 @@ export default function UserCampaignPointsHistoryPage() {
           </div>
         </CardContent>
       </Card>
+
+      <PartnerPointSheet
+        open={sheetOpen}
+        onOpenChange={setSheetOpen}
+        partnerPoint={editing}
+        vaults={listVaults ?? []}
+        onSuccess={() => mutatePartnerPoints()}
+      />
     </div>
   );
 }

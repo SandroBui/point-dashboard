@@ -1,9 +1,15 @@
+<<<<<<<< HEAD:src/app/dashboard/overview/components/filter.tsx
 import { RefreshCw } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
+========
+import { RefreshCw, SearchIcon } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+>>>>>>>> upstream/main:src/app/dashboard/user-campaign-points-history/components/filter.tsx
 import { Field, FieldLabel } from "@/components/ui/field";
 
 import { Button } from "@/components/ui/button";
+<<<<<<<< HEAD:src/app/dashboard/overview/components/filter.tsx
 import {
   Select,
   SelectContent,
@@ -14,6 +20,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+========
+import { SearchableSelect } from "@/components/searchable-select";
+>>>>>>>> upstream/main:src/app/dashboard/user-campaign-points-history/components/filter.tsx
 import type {
   FilterPartnerResource,
   FilterPointTypeResource,
@@ -21,7 +30,10 @@ import type {
 } from "@/types/filters";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+<<<<<<<< HEAD:src/app/dashboard/overview/components/filter.tsx
 
+========
+>>>>>>>> upstream/main:src/app/dashboard/user-campaign-points-history/components/filter.tsx
 import { format, subDays } from "date-fns";
 import { type DateRange } from "react-day-picker";
 import {
@@ -55,24 +67,49 @@ export const FilterOverview = ({
   partnersSelect,
   onApply,
   onReset,
+<<<<<<<< HEAD:src/app/dashboard/overview/components/filter.tsx
   vaultsSelect,
   pointTypesSelect,
   onRefreshData,
 }: FilterCampaignProps) => {
   const [date, setDate] = useState<DateRange | undefined>({
+    from: subDays(new Date(), 7),
+    to: new Date(),
+  });
+
+========
+}: FilterUserCampaignPointHistoryProps) => {
+  const [date, setDate] = useState<DateRange | undefined>({
     from: new Date(),
     to: subDays(new Date(), 7),
   });
-
+  const [userAddress, setUserAddress] = useState("");
+  const [selectedCampaign, setSelectedCampaign] = useState<string>("all");
+>>>>>>>> upstream/main:src/app/dashboard/user-campaign-points-history/components/filter.tsx
   const [selectedPartner, setSelectedPartner] = useState<string>("all");
   const [selectedVault, setSelectedVault] = useState<string>("all");
   const [selectedPointType, setSelectedPointType] = useState<string>("all");
 
+<<<<<<<< HEAD:src/app/dashboard/overview/components/filter.tsx
   const itemsSelectPointType = useMemo(() => {
+========
+  // Debounce amount để tránh spam
+  const [debouncedSearch, setDebouncedSearch] = useState(userAddress);
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(userAddress), 600);
+    return () => clearTimeout(t);
+  }, [userAddress]);
+
+  const itemsSelectPartner = useMemo(() => {
+>>>>>>>> upstream/main:src/app/dashboard/user-campaign-points-history/components/filter.tsx
     return (
       pointTypesSelect?.map((item) => ({
         label: item.attributes.name,
+<<<<<<<< HEAD:src/app/dashboard/overview/components/filter.tsx
         value: item.attributes.slug,
+========
+        value: item.attributes.partner_slug,
+>>>>>>>> upstream/main:src/app/dashboard/user-campaign-points-history/components/filter.tsx
       })) || []
     );
   }, [pointTypesSelect]);
@@ -81,7 +118,11 @@ export const FilterOverview = ({
     return (
       partnersSelect?.map((item) => ({
         label: item.attributes.name,
+<<<<<<<< HEAD:src/app/dashboard/overview/components/filter.tsx
         value: item.attributes.partner_slug,
+========
+        value: item.attributes.campaign_id,
+>>>>>>>> upstream/main:src/app/dashboard/user-campaign-points-history/components/filter.tsx
       })) || []
     );
   }, [partnersSelect]);
@@ -97,19 +138,35 @@ export const FilterOverview = ({
 
   const handleApply = useCallback(() => {
     onApply({
+<<<<<<<< HEAD:src/app/dashboard/overview/components/filter.tsx
       partner: selectedPartner,
       vaultId: selectedVault,
+========
+      userAddress: debouncedSearch,
+      selectedCampaign,
+      selectedPartner,
+      selectedVault,
+>>>>>>>> upstream/main:src/app/dashboard/user-campaign-points-history/components/filter.tsx
       dateFrom: date?.from?.toISOString() || undefined,
       dateTo: date?.to?.toISOString() || undefined,
       type: selectedPointType,
     });
   }, [
+<<<<<<<< HEAD:src/app/dashboard/overview/components/filter.tsx
     onApply,
     selectedPartner,
     selectedVault,
     date?.from,
     date?.to,
     selectedPointType,
+========
+    debouncedSearch,
+    selectedCampaign,
+    selectedPartner,
+    selectedVault,
+    date,
+    onApply,
+>>>>>>>> upstream/main:src/app/dashboard/user-campaign-points-history/components/filter.tsx
   ]);
 
   useEffect(() => {
@@ -126,9 +183,48 @@ export const FilterOverview = ({
 
   return (
     <Card>
+<<<<<<<< HEAD:src/app/dashboard/overview/components/filter.tsx
       <CardContent className="">
         <div className="grid gap-3 lg:grid-cols-5">
           {/* filter partner */}
+========
+      <CardHeader className="pb-0">
+        <CardTitle className="text-sm font-semibold text-muted-foreground flex justify-between items-center">
+          <Field className="max-w-sm">
+            <InputGroup>
+              <InputGroupInput
+                id="user-address-input"
+                value={userAddress}
+                onChange={(e) => setUserAddress(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key !== "Enter") return;
+                  e.preventDefault();
+                  handleApply();
+                }}
+                placeholder="Search by user address..."
+                disabled={isApplying}
+              />
+              <InputGroupAddon align="inline-end">
+                <SearchIcon className="text-muted-foreground" />
+              </InputGroupAddon>
+            </InputGroup>
+          </Field>
+
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <Button
+              variant="outline"
+              disabled={isApplying}
+              onClick={handleReset}
+            >
+              <RefreshCw className="size-4" />
+              Reset Filter
+            </Button>
+          </div>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="pt-4">
+        <div className="grid gap-3 lg:grid-cols-4">
+>>>>>>>> upstream/main:src/app/dashboard/user-campaign-points-history/components/filter.tsx
           <Field className="lg:col-span-1">
             <FieldLabel className={"text-xs font-medium text-muted-foreground"}>
               Partner
@@ -136,6 +232,7 @@ export const FilterOverview = ({
             {isLoading ? (
               <Skeleton className="h-8" />
             ) : (
+<<<<<<<< HEAD:src/app/dashboard/overview/components/filter.tsx
               <Select
                 items={itemsSelectPartner.concat({
                   label: "All",
@@ -166,6 +263,16 @@ export const FilterOverview = ({
                   </SelectGroup>
                 </SelectContent>
               </Select>
+========
+              <SearchableSelect
+                items={itemsSelectCampaign}
+                value={selectedCampaign}
+                onValueChange={setSelectedCampaign}
+                placeholder="Campaign"
+                searchPlaceholder="Search campaign..."
+                disabled={isApplying}
+              />
+>>>>>>>> upstream/main:src/app/dashboard/user-campaign-points-history/components/filter.tsx
             )}
           </Field>
 
@@ -177,6 +284,7 @@ export const FilterOverview = ({
             {isLoading ? (
               <Skeleton className="h-8" />
             ) : (
+<<<<<<<< HEAD:src/app/dashboard/overview/components/filter.tsx
               <Select
                 items={itemsSelectVault.concat({
                   label: "All",
@@ -207,6 +315,16 @@ export const FilterOverview = ({
                   </SelectGroup>
                 </SelectContent>
               </Select>
+========
+              <SearchableSelect
+                items={itemsSelectPartner}
+                value={selectedPartner}
+                onValueChange={setSelectedPartner}
+                placeholder="Partner"
+                searchPlaceholder="Search partner..."
+                disabled={isApplying}
+              />
+>>>>>>>> upstream/main:src/app/dashboard/user-campaign-points-history/components/filter.tsx
             )}
           </Field>
 
@@ -218,6 +336,7 @@ export const FilterOverview = ({
             {isLoading ? (
               <Skeleton className="h-8" />
             ) : (
+<<<<<<<< HEAD:src/app/dashboard/overview/components/filter.tsx
               <Select
                 items={itemsSelectPointType.concat({
                   label: "All",
@@ -248,6 +367,16 @@ export const FilterOverview = ({
                   </SelectGroup>
                 </SelectContent>
               </Select>
+========
+              <SearchableSelect
+                items={itemsSelectVault}
+                value={selectedVault}
+                onValueChange={setSelectedVault}
+                placeholder="Vault"
+                searchPlaceholder="Search vault..."
+                disabled={isApplying}
+              />
+>>>>>>>> upstream/main:src/app/dashboard/user-campaign-points-history/components/filter.tsx
             )}
           </Field>
 

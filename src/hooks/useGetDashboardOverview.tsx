@@ -97,8 +97,8 @@ function useTopList<T>(
 
 export default function useGetDashboardOverview() {
   const [appliedFilters, setAppliedFilters] = useState<OverviewFilters>({
-    dateFrom: new Date().toISOString(),
-    dateTo: subDays(new Date(), 7).toISOString(),
+    dateFrom: subDays(new Date(), 7).toISOString(),
+    dateTo: new Date().toISOString(),
   });
 
   const {

@@ -245,6 +245,7 @@ export default function CampaignsPage() {
           <Table className="min-w-262.5">
             <TableHeader>
               <TableRow>
+                <TableHead className="text-center">No.</TableHead>
                 <TableHead className="w-85">Campaign</TableHead>
                 <TableHead>Partner</TableHead>
                 <TableHead>Type</TableHead>
@@ -261,7 +262,7 @@ export default function CampaignsPage() {
             <TableBody isLoading={isLoadingGetCampaigns} skeletonRows={limit}>
               {campaigns?.data?.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={10} className="p-8">
+                  <TableCell colSpan={11} className="p-8">
                     <Empty className="mx-auto max-w-xl">
                       <EmptyHeader>
                         <EmptyMedia variant="icon">
@@ -276,8 +277,11 @@ export default function CampaignsPage() {
 
               {campaigns?.data &&
                 campaigns?.data?.length > 0 &&
-                campaigns?.data?.map(({ id, attributes }) => (
+                campaigns?.data?.map(({ id, attributes }, index) => (
                   <TableRow key={id}>
+                    <TableCell className="text-center">
+                      {(page - 1) * limit + index + 1}
+                    </TableCell>
                     <TableCell>
                       <Link href={`/dashboard/campaigns/${id}`}>
                         <p className="truncate font-medium text-blue-500">

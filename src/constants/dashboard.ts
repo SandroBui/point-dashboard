@@ -25,8 +25,8 @@ export const navGroups: NavGroup[] = [
         items: [
             { title: "Campaigns", href: "/dashboard/campaigns", icon: Waypoints },
             {
-                title: "Partner Points",
-                href: "/dashboard/partner-points",
+                title: "Partners Source",
+                href: "/dashboard/partners-source",
                 icon: Building2,
             },
             // {
@@ -42,11 +42,11 @@ export const navGroups: NavGroup[] = [
         title: "Point Management",
         items: [
             {
-                title: "User Campaign Points",
-                href: "/dashboard/user-campaign-points",
+                title: "User Point Ledger",
+                href: "/dashboard/user-point-ledger",
                 icon: ClipboardList,
             },
-            { title: "User Campaign Point History", href: "/dashboard/user-campaign-points-history", icon: Boxes },
+            { title: "User Point Ledger History", href: "/dashboard/user-point-ledger-history", icon: Boxes },
             {
                 title: "Point Distribution History",
                 href: "/dashboard/point-distribution-history",

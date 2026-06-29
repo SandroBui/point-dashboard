@@ -160,7 +160,7 @@ export default function PointDistributionLogDetailPage() {
               </Field>
 
               <Field className="lg:col-span-1">
-                <FieldLabel className="font-medium">End Date</FieldLabel>
+                <FieldLabel className="font-medium">Created Date</FieldLabel>
                 {isLoading ? (
                   <Skeleton className="h-8" />
                 ) : (

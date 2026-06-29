@@ -14,8 +14,8 @@ export default function useGetPointDistributionHistory() {
   const [limit, setLimit] = useState(ROW_PER_PAGE[1]);
   const [appliedFilters, setAppliedFilters] =
     useState<PointDistributionHistoryFilters>({
-      dateFrom: new Date().toISOString(),
-      dateTo: subDays(new Date(), 7).toISOString(),
+      dateFrom: subDays(new Date(), 7).toISOString(),
+      dateTo: new Date().toISOString(),
     });
   const [isExporting, setIsExporting] = useState(false);
 

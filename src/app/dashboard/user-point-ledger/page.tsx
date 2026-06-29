@@ -115,10 +115,10 @@ export default function UserCampaignPointsPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
-            User Campaign Points
+            User Point Ledger
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            View management user points cross all campaigns
+            View management user point ledger cross all campaigns
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -170,6 +170,7 @@ export default function UserCampaignPointsPage() {
           <Table className="min-w-262.5">
             <TableHeader>
               <TableRow>
+                <TableHead className="text-center">No.</TableHead>
                 <TableHead className="w-85">User</TableHead>
                 <TableHead className="w-85">Campaign</TableHead>
                 <TableHead>Partner</TableHead>
@@ -187,7 +188,7 @@ export default function UserCampaignPointsPage() {
             >
               {userCampaignPoints?.data?.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={8} className="p-8">
+                  <TableCell colSpan={9} className="p-8">
                     <Empty className="mx-auto max-w-xl">
                       <EmptyHeader>
                         <EmptyMedia variant="icon">
@@ -202,8 +203,11 @@ export default function UserCampaignPointsPage() {
 
               {userCampaignPoints?.data &&
                 userCampaignPoints?.data?.length > 0 &&
-                userCampaignPoints?.data?.map(({ id, attributes }) => (
+                userCampaignPoints?.data?.map(({ id, attributes }, index) => (
                   <TableRow key={id}>
+                    <TableCell className="text-center">
+                      {(page - 1) * limit + index + 1}
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <p className="truncate font-medium text-blue-400">

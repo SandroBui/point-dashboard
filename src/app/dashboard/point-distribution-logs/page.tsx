@@ -130,6 +130,7 @@ export default function PointDistributionLogsPage() {
           <Table className="min-w-262.5">
             <TableHeader>
               <TableRow>
+                <TableHead className="text-center">No.</TableHead>
                 <TableHead className="w-85">Vault</TableHead>
                 <TableHead className="w-85">Campaign</TableHead>
                 <TableHead>Partner</TableHead>
@@ -146,7 +147,7 @@ export default function PointDistributionLogsPage() {
             >
               {pointDistributionLogs?.data?.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={8} className="p-8">
+                  <TableCell colSpan={9} className="p-8">
                     <Empty className="mx-auto max-w-xl">
                       <EmptyHeader>
                         <EmptyMedia variant="icon">
@@ -161,56 +162,61 @@ export default function PointDistributionLogsPage() {
 
               {pointDistributionLogs?.data &&
                 pointDistributionLogs?.data?.length > 0 &&
-                pointDistributionLogs?.data?.map(({ id, attributes }) => (
-                  <TableRow key={id}>
-                    <TableCell className="truncate text-sm text-muted-foreground">
-                      {attributes.vault_name ?? "-"}
-                    </TableCell>
-                    <TableCell className="truncate text-sm text-muted-foreground">
-                      {attributes.point_campaign_name ?? "-"}
-                    </TableCell>
-                    <TableCell className="truncate text-sm text-muted-foreground">
-                      {attributes.partner_name ?? "-"}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={levelBadgeVariant(attributes.level)}
-                        className="capitalize"
-                      >
-                        {attributes.level.toLowerCase()}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="truncate text-sm text-muted-foreground">
-                      {attributes.event ?? "-"}
-                    </TableCell>
-                    <TableCell className="truncate text-sm text-muted-foreground">
-                      {attributes.message ?? "-"}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {attributes.created_at &&
-                        format(
-                          parseUTCStringToLocalDate(attributes.created_at),
-                          "MMM dd, yyyy",
-                        )}{" "}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Link
-                          href={`/dashboard/point-distribution-logs/${id}`}
-                          className={cn(
-                            buttonVariants({
-                              variant: "ghost",
-                              size: "icon-sm",
-                            }),
-                          )}
-                          aria-label="View"
+                pointDistributionLogs?.data?.map(
+                  ({ id, attributes }, index) => (
+                    <TableRow key={id}>
+                      <TableCell className="text-center">
+                        {(page - 1) * limit + index + 1}
+                      </TableCell>
+                      <TableCell className="truncate text-sm text-muted-foreground">
+                        {attributes.vault_name ?? "-"}
+                      </TableCell>
+                      <TableCell className="truncate text-sm text-muted-foreground">
+                        {attributes.point_campaign_name ?? "-"}
+                      </TableCell>
+                      <TableCell className="truncate text-sm text-muted-foreground">
+                        {attributes.partner_name ?? "-"}
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={levelBadgeVariant(attributes.level)}
+                          className="capitalize"
                         >
-                          <Eye className="size-4" />
-                        </Link>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                          {attributes.level.toLowerCase()}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="truncate text-sm text-muted-foreground">
+                        {attributes.event ?? "-"}
+                      </TableCell>
+                      <TableCell className="truncate text-sm text-muted-foreground">
+                        {attributes.message ?? "-"}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {attributes.created_at &&
+                          format(
+                            parseUTCStringToLocalDate(attributes.created_at),
+                            "MMM dd, yyyy",
+                          )}{" "}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <Link
+                            href={`/dashboard/point-distribution-logs/${id}`}
+                            className={cn(
+                              buttonVariants({
+                                variant: "ghost",
+                                size: "icon-sm",
+                              }),
+                            )}
+                            aria-label="View"
+                          >
+                            <Eye className="size-4" />
+                          </Link>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ),
+                )}
             </TableBody>
           </Table>
 

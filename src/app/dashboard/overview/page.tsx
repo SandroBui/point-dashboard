@@ -86,7 +86,7 @@ export default function OverviewPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-12">#</TableHead>
+                  <TableHead className="text-center">No.</TableHead>
                   <TableHead>Vault</TableHead>
                   <TableHead className="text-right">Total Points</TableHead>
                   <TableHead className="text-right">Campaigns</TableHead>
@@ -115,7 +115,7 @@ export default function OverviewPage() {
                   topVaults.data.data.length > 0 &&
                   topVaults.data.data.map(({ id, attributes }, index) => (
                     <TableRow key={id}>
-                      <TableCell className="text-sm text-muted-foreground">
+                      <TableCell className="text-sm text-muted-foreground text-center">
                         {(topVaults.page - 1) * topVaults.limit + index + 1}
                       </TableCell>
                       <TableCell className="font-medium">
@@ -162,7 +162,7 @@ export default function OverviewPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-12">#</TableHead>
+                  <TableHead className="text-center">No.</TableHead>
                   <TableHead>Partner</TableHead>
                   <TableHead className="text-right">Total Points</TableHead>
                   <TableHead className="text-right">Vaults</TableHead>
@@ -174,7 +174,7 @@ export default function OverviewPage() {
               >
                 {topPartners.data?.data?.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={4} className="p-8">
+                    <TableCell colSpan={5} className="p-8">
                       <Empty className="mx-auto max-w-xl">
                         <EmptyHeader>
                           <EmptyMedia variant="icon">
@@ -191,7 +191,7 @@ export default function OverviewPage() {
                   topPartners.data.data.length > 0 &&
                   topPartners.data.data.map(({ id, attributes }, index) => (
                     <TableRow key={id}>
-                      <TableCell className="text-sm text-muted-foreground">
+                      <TableCell className="text-sm text-muted-foreground text-center">
                         {(topPartners.page - 1) * topPartners.limit + index + 1}
                       </TableCell>
                       <TableCell className="font-medium">

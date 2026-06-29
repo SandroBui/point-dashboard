@@ -18,73 +18,42 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SearchableSelect } from "@/components/searchable-select";
-import { CampaignStatus } from "@/constants/campaign";
-import type {
-  FilterPartnerResource,
-  FilterPointTypeResource,
-  FilterVaultResource,
-} from "@/types/filters";
+import type { FilterVaultResource } from "@/types/filters";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 
-import { format, subDays } from "date-fns";
-import { type DateRange } from "react-day-picker";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
 const itemsSelectStatus = [
   { label: "All", value: "all" },
-  { label: "Active", value: CampaignStatus.Active },
-  { label: "Inactive", value: CampaignStatus.Inactive },
+  { label: "Active", value: "active" },
+  { label: "Inactive", value: "inactive" },
 ];
 
-interface FilterCampaignProps {
+interface FilterPartnerPointProps {
   isLoading: boolean;
   isApplying?: boolean;
-  partnersSelect: FilterPartnerResource[];
   vaultsSelect: FilterVaultResource[];
-  pointTypesSelect: FilterPointTypeResource[];
   onApply: ({
-    selectedPartner,
     selectedStatus,
     selectedVault,
     search,
-    dateFrom,
-    dateTo,
-    selectedPointType,
   }: {
-    selectedPartner: string;
     selectedStatus: string;
     selectedVault: string;
     search: string;
-    dateFrom?: string | undefined;
-    dateTo?: string | undefined;
-    selectedPointType: string;
   }) => void;
   onReset: () => void;
 }
 
-export const FilterCampaign = ({
+export const FilterPartnerPoint = ({
   isLoading,
   isApplying,
-  partnersSelect,
+  vaultsSelect,
   onApply,
   onReset,
-  vaultsSelect,
-  pointTypesSelect,
-}: FilterCampaignProps) => {
-  const [date, setDate] = useState<DateRange | undefined>({
-    from: subDays(new Date(), 7),
-    to: new Date(),
-  });
+}: FilterPartnerPointProps) => {
   const [search, setSearch] = useState("");
-  const [selectedPartner, setSelectedPartner] = useState<string>("all");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [selectedVault, setSelectedVault] = useState<string>("all");
-  const [selectedPointType, setSelectedPointType] = useState<string>("all");
 
   // Debounce amount để tránh spam
   const [debouncedSearch, setDebouncedSearch] = useState(search);
@@ -92,24 +61,6 @@ export const FilterCampaign = ({
     const t = setTimeout(() => setDebouncedSearch(search), 600);
     return () => clearTimeout(t);
   }, [search]);
-
-  const itemsSelectPointType = useMemo(() => {
-    return (
-      pointTypesSelect?.map((item) => ({
-        label: item.attributes.name,
-        value: item.attributes.slug,
-      })) || []
-    );
-  }, [pointTypesSelect]);
-
-  const itemsSelectPartner = useMemo(() => {
-    return (
-      partnersSelect?.map((item) => ({
-        label: item.attributes.name,
-        value: item.attributes.partner_slug,
-      })) || []
-    );
-  }, [partnersSelect]);
 
   const itemsSelectVault = useMemo(() => {
     return (
@@ -122,23 +73,11 @@ export const FilterCampaign = ({
 
   const handleApply = useCallback(() => {
     onApply({
-      selectedPartner,
       selectedStatus,
       selectedVault,
       search: debouncedSearch,
-      dateFrom: date?.from?.toISOString() || undefined,
-      dateTo: date?.to?.toISOString() || undefined,
-      selectedPointType,
     });
-  }, [
-    onApply,
-    date,
-    debouncedSearch,
-    selectedPartner,
-    selectedStatus,
-    selectedVault,
-    selectedPointType,
-  ]);
+  }, [debouncedSearch, selectedStatus, selectedVault, onApply]);
 
   useEffect(() => {
     handleApply();
@@ -146,11 +85,8 @@ export const FilterCampaign = ({
 
   const handleReset = () => {
     setSearch("");
-    setSelectedPartner("all");
     setSelectedStatus("all");
     setSelectedVault("all");
-    setSelectedPointType("all");
-    setDate(undefined);
     onReset();
   };
 
@@ -161,7 +97,7 @@ export const FilterCampaign = ({
           <Field className="max-w-sm">
             <InputGroup>
               <InputGroupInput
-                id="inline-end-input"
+                id="partner-point-search"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 onKeyDown={(e) => {
@@ -169,7 +105,7 @@ export const FilterCampaign = ({
                   e.preventDefault();
                   handleApply();
                 }}
-                placeholder="Search..."
+                placeholder="Search by name or slug..."
                 disabled={isApplying}
               />
               <InputGroupAddon align="inline-end">
@@ -191,7 +127,7 @@ export const FilterCampaign = ({
         </CardTitle>
       </CardHeader>
       <CardContent className="pt-4">
-        <div className="grid gap-3 lg:grid-cols-5">
+        <div className="grid gap-3 lg:grid-cols-4">
           {/* filter status */}
           <Field className="lg:col-span-1">
             <FieldLabel className={"text-xs font-medium text-muted-foreground"}>
@@ -227,25 +163,6 @@ export const FilterCampaign = ({
             )}
           </Field>
 
-          {/* filter partner */}
-          <Field className="lg:col-span-1">
-            <FieldLabel className={"text-xs font-medium text-muted-foreground"}>
-              Partner
-            </FieldLabel>
-            {isLoading ? (
-              <Skeleton className="h-8" />
-            ) : (
-              <SearchableSelect
-                items={itemsSelectPartner}
-                value={selectedPartner}
-                onValueChange={setSelectedPartner}
-                placeholder="Partner"
-                searchPlaceholder="Search partner..."
-                disabled={isApplying}
-              />
-            )}
-          </Field>
-
           {/* filter vault */}
           <Field className="lg:col-span-1">
             <FieldLabel className={"text-xs font-medium text-muted-foreground"}>
@@ -263,69 +180,6 @@ export const FilterCampaign = ({
                 disabled={isApplying}
               />
             )}
-          </Field>
-
-          {/* filter point type */}
-          <Field className="lg:col-span-1">
-            <FieldLabel className={"text-xs font-medium text-muted-foreground"}>
-              Point Types
-            </FieldLabel>
-            {isLoading ? (
-              <Skeleton className="h-8" />
-            ) : (
-              <SearchableSelect
-                items={itemsSelectPointType}
-                value={selectedPointType}
-                onValueChange={setSelectedPointType}
-                placeholder="Point Type"
-                searchPlaceholder="Search point type..."
-                disabled={isApplying}
-              />
-            )}
-          </Field>
-
-          {/* filter date range */}
-          <Field className="lg:col-span-1">
-            <FieldLabel
-              htmlFor="date-picker-range"
-              className={"text-xs font-medium text-muted-foreground"}
-            >
-              Date Range
-            </FieldLabel>
-            <Popover>
-              <PopoverTrigger
-                disabled={isApplying}
-                render={
-                  <Button
-                    variant="outline"
-                    id="date-picker-range"
-                    className="justify-start px-2.5 font-normal"
-                  >
-                    {date?.from ? (
-                      date.to ? (
-                        <>
-                          {format(date.from, "LLL dd, y")} -{" "}
-                          {format(date.to, "LLL dd, y")}
-                        </>
-                      ) : (
-                        format(date.from, "LLL dd, y")
-                      )
-                    ) : (
-                      <span>Pick a date</span>
-                    )}
-                  </Button>
-                }
-              />
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="range"
-                  defaultMonth={date?.from}
-                  selected={date}
-                  onSelect={setDate}
-                  numberOfMonths={2}
-                />
-              </PopoverContent>
-            </Popover>
           </Field>
         </div>
       </CardContent>

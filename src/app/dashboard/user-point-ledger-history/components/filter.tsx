@@ -58,8 +58,8 @@ export const FilterUserCampaignPointHistory = ({
   onReset,
 }: FilterUserCampaignPointHistoryProps) => {
   const [date, setDate] = useState<DateRange | undefined>({
-    from: new Date(),
-    to: subDays(new Date(), 7),
+    from: subDays(new Date(), 7),
+    to: new Date(),
   });
   const [userAddress, setUserAddress] = useState("");
   const [selectedCampaign, setSelectedCampaign] = useState<string>("all");

@@ -1,15 +1,6 @@
 "use client";
 
-import {
-  ArrowLeft,
-  Pencil,
-  Copy,
-  Database,
-  Download,
-  Loader2,
-  MoreHorizontal,
-  SlidersHorizontal,
-} from "lucide-react";
+import { ArrowLeft, Pencil, Copy, Database } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import useSWR from "swr";
 import { format } from "date-fns";
@@ -22,8 +13,6 @@ import { Field, FieldLabel } from "@/components/ui/field";
 import { Skeleton } from "@/components/ui/skeleton";
 import { parseUTCStringToLocalDate } from "@/lib/date";
 import { CampaignStatus } from "@/constants/campaign";
-import useGetUserCampaignPoints from "@/hooks/useGetUserCampaignPoints";
-import useGetFilter from "@/hooks/useGetFilter";
 import useGetPaginationTokens from "@/hooks/useGetPaginationTokens";
 import { useState } from "react";
 import { copyTextToClipboard, truncateAddress } from "@/lib/string";
@@ -60,7 +49,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { toFixedNumber, withCommas } from "@/lib/number";
-import { statusBadgeVariant } from "@/lib/userCampaign";
 import { cn } from "@/lib/utils";
 
 import {
@@ -178,7 +166,7 @@ export default function CampaignDetailPage() {
           {error ? (
             <div className="text-sm text-destructive">{error.message}</div>
           ) : (
-            <div className="grid gap-4 lg:grid-cols-2">
+            <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               <Field className="lg:col-span-1">
                 <FieldLabel className="font-medium">Status</FieldLabel>
                 {isLoading ? (
@@ -330,6 +318,7 @@ export default function CampaignDetailPage() {
           <Table className="min-w-262.5">
             <TableHeader>
               <TableRow>
+                <TableHead className="text-center">No.</TableHead>
                 <TableHead className="w-85">Wallet</TableHead>
                 <TableHead className="w-85">Total Point</TableHead>
                 <TableHead>Percentage</TableHead>
@@ -341,7 +330,7 @@ export default function CampaignDetailPage() {
             >
               {campaignUserPoints?.data?.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={3} className="p-8">
+                  <TableCell colSpan={4} className="p-8">
                     <Empty className="mx-auto max-w-xl">
                       <EmptyHeader>
                         <EmptyMedia variant="icon">
@@ -356,8 +345,9 @@ export default function CampaignDetailPage() {
 
               {campaignUserPoints?.data &&
                 campaignUserPoints?.data?.length > 0 &&
-                campaignUserPoints?.data?.map(({ id, attributes }) => (
+                campaignUserPoints?.data?.map(({ id, attributes }, index) => (
                   <TableRow key={id}>
+                    <TableCell className="text-center">{index + 1}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <p className="truncate font-medium text-blue-400">

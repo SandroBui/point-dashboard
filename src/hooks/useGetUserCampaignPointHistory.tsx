@@ -18,8 +18,8 @@ export default function useGetUserCampaignPointHistory() {
   const [limit, setLimit] = useState(ROW_PER_PAGE[1]);
   const [appliedFilters, setAppliedFilters] =
     useState<UserCampaignPointHistoryFilters>({
-      dateFrom: new Date().toISOString(),
-      dateTo: subDays(new Date(), 7).toISOString(),
+      dateFrom: subDays(new Date(), 7).toISOString(),
+      dateTo: new Date().toISOString(),
     });
   const [sortField, setSortField] = useState<HistorySortField>("created_at");
   const [sortOrder, setSortOrder] = useState<HistorySortOrder>("desc");

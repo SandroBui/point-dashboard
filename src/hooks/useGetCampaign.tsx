@@ -21,8 +21,8 @@ export default function useGetCampaigns() {
   const [limit, setLimit] = useState(ROW_PER_PAGE[1]);
 
   const [appliedFilters, setAppliedFilters] = useState<CampaignFilters>({
-    dateFrom: new Date().toISOString(),
-    dateTo: subDays(new Date(), 7).toISOString(),
+    dateFrom: subDays(new Date(), 7).toISOString(),
+    dateTo: new Date().toISOString(),
   });
   const [isExporting, setIsExporting] = useState(false);
 
