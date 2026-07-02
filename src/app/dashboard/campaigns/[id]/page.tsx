@@ -301,6 +301,23 @@ export default function CampaignDetailPage() {
                   <div className="text-sm text-muted-foreground">-</div>
                 )}
               </Field>
+
+              <Field className="lg:col-span-2">
+                <FieldLabel className="font-medium">Vault Reward</FieldLabel>
+                {isLoading ? (
+                  <Skeleton className="h-8" />
+                ) : attrs?.vault_reward?.length ? (
+                  <div className="flex flex-wrap gap-1.5">
+                    {attrs.vault_reward.map((tag) => (
+                      <Badge key={tag} variant="secondary">
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-sm text-muted-foreground">-</div>
+                )}
+              </Field>
             </div>
           )}
         </CardContent>
@@ -321,7 +338,9 @@ export default function CampaignDetailPage() {
                 <TableHead className="text-center">No.</TableHead>
                 <TableHead className="w-85">Wallet</TableHead>
                 <TableHead className="w-85">Total Point</TableHead>
-                <TableHead>Percentage</TableHead>
+                <TableHead>Percentage Point</TableHead>
+                <TableHead className="w-85">Amount Shares Holding</TableHead>
+                <TableHead>Percentage Shares Holding</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody
@@ -330,7 +349,7 @@ export default function CampaignDetailPage() {
             >
               {campaignUserPoints?.data?.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={4} className="p-8">
+                  <TableCell colSpan={6} className="p-8">
                     <Empty className="mx-auto max-w-xl">
                       <EmptyHeader>
                         <EmptyMedia variant="icon">
@@ -382,7 +401,28 @@ export default function CampaignDetailPage() {
                     </TableCell>
                     <TableCell className="text-sm">
                       {withCommas(
-                        toFixedNumber(Number(attributes.percentage) || 0, 2),
+                        toFixedNumber(
+                          Number(attributes.percentage_point) || 0,
+                          2,
+                        ),
+                      )}
+                      %
+                    </TableCell>
+
+                    <TableCell className="text-sm">
+                      {withCommas(
+                        toFixedNumber(
+                          Number(attributes.amount_shares_holding) || 0,
+                          2,
+                        ),
+                      )}
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {withCommas(
+                        toFixedNumber(
+                          Number(attributes.percentage_shares_holding) || 0,
+                          2,
+                        ),
                       )}
                       %
                     </TableCell>

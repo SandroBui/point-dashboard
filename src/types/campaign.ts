@@ -23,6 +23,7 @@ export type CampaignAttributes = {
   distributed: number;
   created_at: string;
   updated_at: string;
+  vault_reward: string[];
 };
 
 export type CreateCampaignInput = {

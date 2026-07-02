@@ -55,9 +55,11 @@ export type ImportUserCampaignPointsResponse = {
 };
 
 export type CampaignUserPointsAttributes = {
-  "user_address": string;
-  "total_points": string;
-  "percentage": string;
+  user_address: string;
+  total_points: string;
+  percentage_point: string;
+  amount_shares_holding: string;
+  percentage_shares_holding: string;
 };
 
 export type CampaignUserPointsResource = {
