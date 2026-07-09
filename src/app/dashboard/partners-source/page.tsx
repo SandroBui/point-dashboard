@@ -48,6 +48,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
+import { PartnerSummary } from "./components/partner-summary";
 
 const itemsSelectRow = ROW_PER_PAGE.map((item) => ({
   label: item,
@@ -69,6 +70,7 @@ export default function PartnerPointsPage() {
     resetFilters,
     listVaults,
     mutatePartnerPoints,
+    appliedFilters,
   } = useGetPartnerPoints();
 
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -303,6 +305,20 @@ export default function PartnerPointsPage() {
           </div>
         </CardContent>
       </Card>
+
+      <section className="space-y-3">
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h2 className="text-xl font-semibold tracking-tight">
+              Partners Summary
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Aggregated partner point totals by source
+            </p>
+          </div>
+        </div>
+        <PartnerSummary partnerName={appliedFilters.search} />
+      </section>
 
       <PartnerPointSheet
         open={sheetOpen}

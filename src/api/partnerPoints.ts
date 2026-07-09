@@ -2,6 +2,7 @@ import type {
   PartnerPointInput,
   PartnerPointSingleResponse,
   PartnerPointsResponse,
+  PartnerPointSummariesResponse,
 } from "@/types/partnerPoint";
 import apiFetch from "../lib/apiFetch";
 import qs from "query-string";
@@ -41,4 +42,17 @@ export const updatePartnerPoint = async (
       method: "PATCH",
       body: JSON.stringify(input),
     },
+  );
+
+export const getSummaryPartnerPoints = async (
+  page: number,
+  limit: number,
+  partnerName?: string,
+) =>
+  await apiFetch<PartnerPointSummariesResponse>(
+    `/api/v1/admin/partner-points/summary?${qs.stringify({
+      "page[number]": page,
+      "page[size]": limit,
+      "filter[partner_name]": partnerName,
+    })}`,
   );
