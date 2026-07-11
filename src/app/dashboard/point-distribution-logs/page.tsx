@@ -145,7 +145,8 @@ export default function PointDistributionLogsPage() {
               isLoading={isLoadingGetPointDistributionLogs}
               skeletonRows={limit}
             >
-              {pointDistributionLogs?.data?.length === 0 && (
+              {(!pointDistributionLogs?.data ||
+                pointDistributionLogs?.data?.length === 0) && (
                 <TableRow>
                   <TableCell colSpan={9} className="p-8">
                     <Empty className="mx-auto max-w-xl">

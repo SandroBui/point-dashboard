@@ -185,7 +185,7 @@ export default function UserCampaignPointsHistoryPage() {
               </TableRow>
             </TableHeader>
             <TableBody isLoading={isLoadingHistory} skeletonRows={limit}>
-              {history?.data?.length === 0 && (
+              {(!history?.data || history?.data?.length === 0) && (
                 <TableRow>
                   <TableCell colSpan={6} className="p-8">
                     <Empty className="mx-auto max-w-xl">

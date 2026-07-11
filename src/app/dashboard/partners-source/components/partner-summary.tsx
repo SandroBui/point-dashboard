@@ -85,15 +85,16 @@ export const PartnerSummary = ({ partnerName }: PartnerSummaryProps) => {
               <TableHead className="w-64">Name</TableHead>
               <TableHead>Slug</TableHead>
               <TableHead>Total Vaults</TableHead>
-              <TableHead>Total Points</TableHead>
-              <TableHead>Total Tokens</TableHead>
+              <TableHead>Total Points Distributed</TableHead>
+              <TableHead>Total Tokens Distributed</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody
             isLoading={isLoadingGetSummaryPartnerPoints}
             skeletonRows={limit}
           >
-            {summaryPartnerPoints?.data?.length === 0 && (
+            {(!summaryPartnerPoints?.data ||
+              summaryPartnerPoints?.data?.length === 0) && (
               <TableRow>
                 <TableCell colSpan={6} className="p-8">
                   <Empty className="mx-auto max-w-xl">
@@ -138,7 +139,11 @@ export const PartnerSummary = ({ partnerName }: PartnerSummaryProps) => {
                         : "0"}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      N/A
+                      {attributes.total_tokens
+                        ? withCommas(
+                            toFixedNumber(Number(attributes.total_tokens), 2),
+                          )
+                        : "0"}
                     </TableCell>
                   </TableRow>
                 );

@@ -14,7 +14,7 @@ function ThemeProvider({ children, ...props }: ThemeProviderProps) {
     <SessionProvider>
       <NextThemesProvider {...props}>
         <TooltipProvider>{children}</TooltipProvider>
-        <Toaster />
+        <Toaster duration={5000} />
       </NextThemesProvider>
     </SessionProvider>
   );

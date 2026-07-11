@@ -96,7 +96,8 @@ export default function OverviewPage() {
                 isLoading={topVaults.isLoading}
                 skeletonRows={topVaults.limit}
               >
-                {topVaults.data?.data?.length === 0 && (
+                {(!topVaults.data?.data ||
+                  topVaults.data?.data?.length === 0) && (
                   <TableRow>
                     <TableCell colSpan={4} className="p-8">
                       <Empty className="mx-auto max-w-xl">
@@ -172,7 +173,8 @@ export default function OverviewPage() {
                 isLoading={topPartners.isLoading}
                 skeletonRows={topPartners.limit}
               >
-                {topPartners.data?.data?.length === 0 && (
+                {(!topPartners.data?.data ||
+                  topPartners.data?.data?.length === 0) && (
                   <TableRow>
                     <TableCell colSpan={5} className="p-8">
                       <Empty className="mx-auto max-w-xl">

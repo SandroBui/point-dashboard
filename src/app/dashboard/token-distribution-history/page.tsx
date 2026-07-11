@@ -1,8 +1,10 @@
 "use client";
-import { Database, Pencil, Plus } from "lucide-react";
-import { useState } from "react";
 
-import { Button } from "@/components/ui/button";
+import { Copy, Database } from "lucide-react";
+import { format } from "date-fns";
+
+import { FilterTokenDistributionTracking } from "./components/filter";
+import { ImportTokenDistributionTrackingDialog } from "./components/import-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -12,10 +14,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { FilterPartnerPoint } from "./components/filter";
-import { PartnerPointSheet } from "./components/partner-point-sheet";
-
 import {
   Pagination,
   PaginationContent,
@@ -25,7 +23,6 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-
 import {
   Select,
   SelectContent,
@@ -34,61 +31,69 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ROW_PER_PAGE } from "@/constants/dashboard";
-import { format } from "date-fns";
-import { parseUTCStringToLocalDate } from "@/lib/date";
-import { cn } from "@/lib/utils";
-import useGetPaginationTokens from "@/hooks/useGetPaginationTokens";
-import useGetPartnerPoints from "@/hooks/useGetPartnerPoints";
-import type { PartnerPointResource } from "@/types/partnerPoint";
-
 import {
   Empty,
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { PartnerSummary } from "./components/partner-summary";
+import { ROW_PER_PAGE } from "@/constants/dashboard";
+import useGetFilter from "@/hooks/useGetFilter";
+import useGetPaginationTokens from "@/hooks/useGetPaginationTokens";
+import useGetTokenDistributionTracking from "@/hooks/useGetTokenDistributionTracking";
+import { parseUTCStringToLocalDate } from "@/lib/date";
+import { toFixedNumber, withCommas } from "@/lib/number";
+import { copyTextToClipboard, truncateAddress } from "@/lib/string";
+import { cn } from "@/lib/utils";
+import { useState } from "react";
+
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const itemsSelectRow = ROW_PER_PAGE.map((item) => ({
   label: item,
   value: item,
 }));
 
-export default function PartnerPointsPage() {
+export default function TokenDistributionTrackingPage() {
   const {
     page,
     limit,
     handleChangeLimit,
-    partnerPoints,
+    tokenDistributionTracking,
     handleOnchangePage,
     handleNextPage,
     handlePreviousPage,
-    isLoadingGetPartnerPoints,
-    isLoadingFilter,
+    isLoadingGetTokenDistributionTracking,
     applyFilters,
     resetFilters,
-    listVaults,
-    mutatePartnerPoints,
-    appliedFilters,
-  } = useGetPartnerPoints();
+    refreshTokenDistributionTracking,
+  } = useGetTokenDistributionTracking();
+  const { listPartners, isLoadingFilter, listFilterCampaigns } = useGetFilter();
 
-  const [sheetOpen, setSheetOpen] = useState(false);
-  const [editing, setEditing] = useState<PartnerPointResource | null>(null);
-
-  const totalPages = Math.max(1, partnerPoints?.meta?.total_pages ?? 1);
+  const totalPages = Math.max(
+    1,
+    tokenDistributionTracking?.meta?.total_pages ?? 1,
+  );
   const canGoPrev = page > 1;
   const canGoNext = page < totalPages;
   const paginationTokens = useGetPaginationTokens(page, totalPages);
 
-  const handleCreate = () => {
-    setEditing(null);
-    setSheetOpen(true);
-  };
+  const [currentAddressCopy, setCurrentAddressCopy] = useState({
+    address: "",
+    rowIndex: 0,
+  });
 
-  const handleEdit = (partnerPoint: PartnerPointResource) => {
-    setEditing(partnerPoint);
-    setSheetOpen(true);
+  const copyAddressToClipboard = (address: string, rowIndex: number) => {
+    copyTextToClipboard(address, () => {
+      setCurrentAddressCopy({ address, rowIndex });
+      setTimeout(() => {
+        setCurrentAddressCopy({ address: "", rowIndex: 0 });
+      }, 2000);
+    });
   };
 
   return (
@@ -96,55 +101,56 @@ export default function PartnerPointsPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
-            Partners Source Management
+            Token Distribution History
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Manage partner sources and their configurations
+            Track imported token distribution records across campaigns
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Button onClick={handleCreate}>
-            <Plus className="size-4" />
-            Create Partner Source
-          </Button>
+          <ImportTokenDistributionTrackingDialog
+            onImported={refreshTokenDistributionTracking}
+          />
         </div>
       </div>
-      <FilterPartnerPoint
+
+      <FilterTokenDistributionTracking
         isLoading={isLoadingFilter}
-        isApplying={isLoadingGetPartnerPoints}
+        isApplying={isLoadingGetTokenDistributionTracking}
+        partnersSelect={listPartners}
+        campaignsSelect={listFilterCampaigns}
         onApply={applyFilters}
         onReset={resetFilters}
-        vaultsSelect={listVaults ?? []}
       />
+
       <Card>
-        <CardHeader className="flex justify-between items-center gap-1">
+        <CardHeader className="flex items-center justify-between gap-1">
           <div className="space-y-1">
             <CardTitle className="text-sm font-semibold">
-              Total {partnerPoints?.meta?.total ?? 0} partner points
+              Total {tokenDistributionTracking?.meta?.total ?? 0} records
             </CardTitle>
           </div>
         </CardHeader>
         <CardContent className="pt-0">
-          <Table className="min-w-237.5">
+          <Table className="min-w-220">
             <TableHeader>
               <TableRow>
                 <TableHead className="text-center">No.</TableHead>
-                <TableHead className="w-64">Name</TableHead>
-                <TableHead>Slug</TableHead>
-                <TableHead>Vault</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Exposure</TableHead>
-                <TableHead>Updated</TableHead>
-                <TableHead className="w-18 text-right">Actions</TableHead>
+                <TableHead className="w-56">User Wallet</TableHead>
+                <TableHead className="text-right">Token Amount</TableHead>
+                <TableHead className="w-56">Tx Hash</TableHead>
+                <TableHead className="w-64">Campaign</TableHead>
+                <TableHead>Created At</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody
-              isLoading={isLoadingGetPartnerPoints}
+              isLoading={isLoadingGetTokenDistributionTracking}
               skeletonRows={limit}
             >
-              {(!partnerPoints?.data || partnerPoints?.data?.length === 0) && (
+              {(!tokenDistributionTracking?.data ||
+                tokenDistributionTracking?.data?.length === 0) && (
                 <TableRow>
-                  <TableCell colSpan={8} className="p-8">
+                  <TableCell colSpan={6} className="p-8">
                     <Empty className="mx-auto max-w-xl">
                       <EmptyHeader>
                         <EmptyMedia variant="icon">
@@ -157,68 +163,82 @@ export default function PartnerPointsPage() {
                 </TableRow>
               )}
 
-              {partnerPoints?.data &&
-                partnerPoints?.data?.length > 0 &&
-                partnerPoints?.data?.map((partnerPoint, index) => {
-                  const { id, attributes } = partnerPoint;
+              {tokenDistributionTracking?.data?.map(
+                ({ id, attributes }, index) => {
+                  const rowIndex = (page - 1) * limit + index + 1;
+
                   return (
                     <TableRow key={id}>
-                      <TableCell className="text-center">
-                        {(page - 1) * limit + index + 1}
+                      <TableCell className="text-center">{rowIndex}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <p className="truncate font-medium text-blue-400">
+                            {truncateAddress(
+                              attributes.recipient_wallet_address,
+                            )}
+                          </p>
+                          <Tooltip
+                            open={
+                              currentAddressCopy?.address ===
+                                attributes.recipient_wallet_address &&
+                              currentAddressCopy?.rowIndex === rowIndex
+                            }
+                          >
+                            <TooltipTrigger
+                              render={
+                                <Copy
+                                  className="size-4 cursor-pointer"
+                                  onClick={() =>
+                                    copyAddressToClipboard(
+                                      attributes.recipient_wallet_address,
+                                      rowIndex,
+                                    )
+                                  }
+                                />
+                              }
+                            />
+                            <TooltipContent>
+                              <p>Address successfully copied!</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right text-sm text-muted-foreground">
+                        {withCommas(
+                          toFixedNumber(Number(attributes.amount), 4),
+                        )}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        <p
+                          className="max-w-56 truncate"
+                          title={attributes.tx_hash}
+                        >
+                          {attributes.tx_hash || "-"}
+                        </p>
                       </TableCell>
                       <TableCell>
                         <div className="truncate font-medium">
-                          {attributes.name}
+                          {attributes.campaign_name || "-"}
                         </div>
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
-                        {attributes.slug}
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {attributes.vault_name ?? "-"}
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={attributes.is_active ? "success" : "muted"}
-                        >
-                          {attributes.is_active ? "Active" : "Inactive"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={attributes.is_exposure ? "success" : "muted"}
-                        >
-                          {attributes.is_exposure ? "Yes" : "No"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {attributes.updated_at &&
-                          format(
-                            parseUTCStringToLocalDate(attributes.updated_at),
-                            "MMM dd, yyyy",
-                          )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon-sm"
-                            aria-label="Edit"
-                            onClick={() => handleEdit(partnerPoint)}
-                          >
-                            <Pencil className="size-4" />
-                          </Button>
-                        </div>
+                        {attributes.created_at
+                          ? format(
+                              parseUTCStringToLocalDate(attributes.created_at),
+                              "MMM dd, yyyy HH:mm",
+                            )
+                          : "-"}
                       </TableCell>
                     </TableRow>
                   );
-                })}
+                },
+              )}
             </TableBody>
           </Table>
 
           <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex gap-2 items-center shrink-0">
-              <p className="">Rows per page</p>
+            <div className="flex shrink-0 items-center gap-2">
+              <p>Rows per page</p>
               <Select
                 items={itemsSelectRow}
                 onValueChange={(newLimit) =>
@@ -226,7 +246,7 @@ export default function PartnerPointsPage() {
                 }
                 value={limit}
               >
-                <SelectTrigger className="">
+                <SelectTrigger>
                   <SelectValue placeholder="Rows per page" />
                 </SelectTrigger>
                 <SelectContent>
@@ -235,7 +255,7 @@ export default function PartnerPointsPage() {
                       <SelectItem
                         key={item.value}
                         value={item.value}
-                        className={"text-sm"}
+                        className="text-sm"
                       >
                         {item.label}
                       </SelectItem>
@@ -305,28 +325,6 @@ export default function PartnerPointsPage() {
           </div>
         </CardContent>
       </Card>
-
-      <section className="space-y-3">
-        <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h2 className="text-xl font-semibold tracking-tight">
-              Partners Summary
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              Aggregated partner point totals by source
-            </p>
-          </div>
-        </div>
-        <PartnerSummary partnerName={appliedFilters.search} />
-      </section>
-
-      <PartnerPointSheet
-        open={sheetOpen}
-        onOpenChange={setSheetOpen}
-        partnerPoint={editing}
-        vaults={listVaults ?? []}
-        onSuccess={() => mutatePartnerPoints()}
-      />
     </div>
   );
 }

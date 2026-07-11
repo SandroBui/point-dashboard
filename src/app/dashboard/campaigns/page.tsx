@@ -260,7 +260,7 @@ export default function CampaignsPage() {
               </TableRow>
             </TableHeader>
             <TableBody isLoading={isLoadingGetCampaigns} skeletonRows={limit}>
-              {campaigns?.data?.length === 0 && (
+              {(!campaigns?.data || campaigns?.data?.length === 0) && (
                 <TableRow>
                   <TableCell colSpan={11} className="p-8">
                     <Empty className="mx-auto max-w-xl">

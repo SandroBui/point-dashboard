@@ -119,13 +119,16 @@ export default function CampaignDetailPage() {
   const canGoNext = page < totalPages;
   const paginationTokens = useGetPaginationTokens(page, totalPages);
 
-  const [currentAddressCopy, setCurrentAddressCopy] = useState("");
+  const [currentAddressCopy, setCurrentAddressCopy] = useState({
+    address: "",
+    rowIndex: 0,
+  });
 
-  const copyAddressToClipboard = (address: string) => {
+  const copyAddressToClipboard = (address: string, rowIndex: number) => {
     copyTextToClipboard(address, () => {
-      setCurrentAddressCopy(address);
+      setCurrentAddressCopy({ address, rowIndex });
       setTimeout(() => {
-        setCurrentAddressCopy("");
+        setCurrentAddressCopy({ address: "", rowIndex: 0 });
       }, 2000);
     });
   };
@@ -347,7 +350,8 @@ export default function CampaignDetailPage() {
               isLoading={campaignUserPointsLoading}
               skeletonRows={limit}
             >
-              {campaignUserPoints?.data?.length === 0 && (
+              {(!campaignUserPoints?.data ||
+                campaignUserPoints?.data?.length === 0) && (
                 <TableRow>
                   <TableCell colSpan={6} className="p-8">
                     <Empty className="mx-auto max-w-xl">
@@ -364,70 +368,82 @@ export default function CampaignDetailPage() {
 
               {campaignUserPoints?.data &&
                 campaignUserPoints?.data?.length > 0 &&
-                campaignUserPoints?.data?.map(({ id, attributes }, index) => (
-                  <TableRow key={id}>
-                    <TableCell className="text-center">{index + 1}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <p className="truncate font-medium text-blue-400">
-                          {truncateAddress(attributes.user_address)}
-                        </p>
-                        <Tooltip
-                          open={currentAddressCopy === attributes.user_address}
-                        >
-                          <TooltipTrigger
-                            render={
-                              <Copy
-                                className="size-4 cursor-pointer"
-                                onClick={() =>
-                                  copyAddressToClipboard(
-                                    attributes.user_address,
-                                  )
-                                }
-                              />
+                campaignUserPoints?.data?.map(({ id, attributes }, index) => {
+                  const rowIndex = (page - 1) * limit + index + 1;
+
+                  return (
+                    <TableRow key={id}>
+                      <TableCell className="text-center">{rowIndex}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <p className="truncate font-medium text-blue-400">
+                            {truncateAddress(attributes.user_address)}
+                          </p>
+                          <Tooltip
+                            open={
+                              currentAddressCopy?.address ===
+                                attributes.user_address &&
+                              currentAddressCopy?.rowIndex === rowIndex
                             }
-                          />
-                          <TooltipContent>
-                            <p>Address successfully copied!</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </div>
-                    </TableCell>
+                          >
+                            <TooltipTrigger
+                              render={
+                                <Copy
+                                  className="size-4 cursor-pointer"
+                                  onClick={() =>
+                                    copyAddressToClipboard(
+                                      attributes.user_address,
+                                      rowIndex,
+                                    )
+                                  }
+                                />
+                              }
+                            />
+                            <TooltipContent>
+                              <p>Address successfully copied!</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
+                      </TableCell>
 
-                    <TableCell className="text-sm">
-                      {withCommas(
-                        toFixedNumber(Number(attributes.total_points) || 0, 2),
-                      )}
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {withCommas(
-                        toFixedNumber(
-                          Number(attributes.percentage_point) || 0,
-                          2,
-                        ),
-                      )}
-                      %
-                    </TableCell>
+                      <TableCell className="text-sm">
+                        {withCommas(
+                          toFixedNumber(
+                            Number(attributes.total_points) || 0,
+                            2,
+                          ),
+                        )}
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {withCommas(
+                          toFixedNumber(
+                            Number(attributes.percentage_point) || 0,
+                            2,
+                          ),
+                        )}
+                        %
+                      </TableCell>
 
-                    <TableCell className="text-sm">
-                      {withCommas(
-                        toFixedNumber(
-                          Number(attributes.amount_shares_holding) || 0,
-                          2,
-                        ),
-                      )}
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {withCommas(
-                        toFixedNumber(
-                          Number(attributes.percentage_shares_holding) || 0,
-                          2,
-                        ),
-                      )}
-                      %
-                    </TableCell>
-                  </TableRow>
-                ))}
+                      <TableCell className="text-sm">
+                        {withCommas(
+                          toFixedNumber(
+                            Number(attributes.amount_shares_holding) || 0,
+                            2,
+                          ),
+                        )}
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {withCommas(
+                          toFixedNumber(
+                            Number(attributes.percentage_shares_holding) || 0,
+                            2,
+                          ),
+                        )}
+                        %
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
             </TableBody>
           </Table>
 

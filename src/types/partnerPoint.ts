@@ -36,6 +36,7 @@ export type PartnerPointSummaryAttributes = {
   partner_slug: string;
   total_point: string;
   total_vault: number;
+  total_tokens: string;
 };
 
 export type PartnerPointSummaryResource = {

@@ -99,13 +99,16 @@ export default function UserCampaignPointsPage() {
   const canGoNext = page < totalPages;
   const paginationTokens = useGetPaginationTokens(page, totalPages);
 
-  const [currentAddressCopy, setCurrentAddressCopy] = useState("");
+  const [currentAddressCopy, setCurrentAddressCopy] = useState({
+    address: "",
+    rowIndex: 0,
+  });
 
-  const copyAddressToClipboard = (address: string) => {
+  const copyAddressToClipboard = (address: string, rowIndex: number) => {
     copyTextToClipboard(address, () => {
-      setCurrentAddressCopy(address);
+      setCurrentAddressCopy({ address, rowIndex });
       setTimeout(() => {
-        setCurrentAddressCopy("");
+        setCurrentAddressCopy({ address: "", rowIndex: 0 });
       }, 2000);
     });
   };
@@ -186,7 +189,8 @@ export default function UserCampaignPointsPage() {
               isLoading={isLoadingGetUserCampaignPoints}
               skeletonRows={limit}
             >
-              {userCampaignPoints?.data?.length === 0 && (
+              {(!userCampaignPoints?.data ||
+                userCampaignPoints?.data?.length === 0) && (
                 <TableRow>
                   <TableCell colSpan={9} className="p-8">
                     <Empty className="mx-auto max-w-xl">
@@ -203,95 +207,105 @@ export default function UserCampaignPointsPage() {
 
               {userCampaignPoints?.data &&
                 userCampaignPoints?.data?.length > 0 &&
-                userCampaignPoints?.data?.map(({ id, attributes }, index) => (
-                  <TableRow key={id}>
-                    <TableCell className="text-center">
-                      {(page - 1) * limit + index + 1}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <p className="truncate font-medium text-blue-400">
-                          {truncateAddress(attributes.user)}
-                        </p>
-                        <Tooltip open={currentAddressCopy === attributes.user}>
-                          <TooltipTrigger
-                            render={
-                              <Copy
-                                className="size-4 cursor-pointer"
-                                onClick={() =>
-                                  copyAddressToClipboard(attributes.user)
-                                }
-                              />
+                userCampaignPoints?.data?.map(({ id, attributes }, index) => {
+                  const rowIndex = (page - 1) * limit + index + 1;
+
+                  return (
+                    <TableRow key={id}>
+                      <TableCell className="text-center">{rowIndex}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <p className="truncate font-medium text-blue-400">
+                            {truncateAddress(attributes.user)}
+                          </p>
+                          <Tooltip
+                            open={
+                              currentAddressCopy?.address === attributes.user &&
+                              currentAddressCopy?.rowIndex === rowIndex
                             }
-                          />
-                          <TooltipContent>
-                            <p>Address successfully copied!</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </div>
-                    </TableCell>
-                    <TableCell className="truncate text-sm text-muted-foreground">
-                      {attributes.campaign}
-                    </TableCell>
-                    <TableCell className="truncate text-sm text-muted-foreground">
-                      {attributes.partner ?? "-"}
-                    </TableCell>
-                    <TableCell className="truncate text-sm text-muted-foreground">
-                      {attributes.vault}
-                    </TableCell>
-                    <TableCell className="text-right text-sm">
-                      {withCommas(
-                        toFixedNumber(
-                          Number(attributes.current_points) || 0,
-                          2,
-                        ),
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right text-sm">
-                      {withCommas(
-                        toFixedNumber(
-                          Number(attributes.lifetime_points) || 0,
-                          2,
-                        ),
-                      )}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {attributes.last_distribution_time &&
-                        format(
-                          parseUTCStringToLocalDate(
-                            attributes.last_distribution_time,
+                          >
+                            <TooltipTrigger
+                              render={
+                                <Copy
+                                  className="size-4 cursor-pointer"
+                                  onClick={() =>
+                                    copyAddressToClipboard(
+                                      attributes.user,
+                                      rowIndex,
+                                    )
+                                  }
+                                />
+                              }
+                            />
+                            <TooltipContent>
+                              <p>Address successfully copied!</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
+                      </TableCell>
+                      <TableCell className="truncate text-sm text-muted-foreground">
+                        {attributes.campaign}
+                      </TableCell>
+                      <TableCell className="truncate text-sm text-muted-foreground">
+                        {attributes.partner ?? "-"}
+                      </TableCell>
+                      <TableCell className="truncate text-sm text-muted-foreground">
+                        {attributes.vault}
+                      </TableCell>
+                      <TableCell className="text-right text-sm">
+                        {withCommas(
+                          toFixedNumber(
+                            Number(attributes.current_points) || 0,
+                            2,
                           ),
-                          "MMM dd, yyyy",
-                        )}{" "}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={statusBadgeVariant(attributes.status)}
-                        className="capitalize"
-                      >
-                        {attributes.status.toLowerCase()}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          aria-label="Edit"
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right text-sm">
+                        {withCommas(
+                          toFixedNumber(
+                            Number(attributes.lifetime_points) || 0,
+                            2,
+                          ),
+                        )}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {attributes.last_distribution_time &&
+                          format(
+                            parseUTCStringToLocalDate(
+                              attributes.last_distribution_time,
+                            ),
+                            "MMM dd, yyyy",
+                          )}{" "}
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={statusBadgeVariant(attributes.status)}
+                          className="capitalize"
                         >
-                          <Pencil className="size-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          aria-label="More actions"
-                        >
-                          <MoreHorizontal className="size-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                          {attributes.status.toLowerCase()}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            aria-label="Edit"
+                          >
+                            <Pencil className="size-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            aria-label="More actions"
+                          >
+                            <MoreHorizontal className="size-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
             </TableBody>
           </Table>
 
