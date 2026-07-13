@@ -1,3 +1,4 @@
+import { auth } from "@/auth";
 import type { NextRequest } from "next/server";
 
 function getApiBaseUrl(): string {
@@ -35,6 +36,13 @@ export async function proxyToApi(req: NextRequest): Promise<Response> {
       headers.set(key, value);
     }
   });
+
+  // Admin API requires Authorization: Bearer <backend access_token>.
+  // Attach from the NextAuth session (exchanged from Google id_token on sign-in).
+  const session = await auth();
+  if (session?.accessToken) {
+    headers.set("Authorization", `Bearer ${session.accessToken}`);
+  }
 
   const init: RequestInit = {
     method: req.method,
