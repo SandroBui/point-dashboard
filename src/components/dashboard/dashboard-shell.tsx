@@ -13,7 +13,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
-import { signOut, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
+import { logoutAction } from "@/app/actions/auth";
 import { SidebarContent } from "./sidebar-content";
 import { navGroups } from "@/constants/dashboard";
 import { ModeToggle } from "../mode-toggle";
@@ -30,6 +31,7 @@ function getActiveTitle(pathname: string) {
 function DashboardShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = React.useState(false);
+  const [isLoggingOut, setIsLoggingOut] = React.useState(false);
   const title = getActiveTitle(pathname);
   const { data: session, status: sessionStatus } = useSession();
 
@@ -105,12 +107,23 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
                     <span>Settings</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator /> */}
-                  <DropdownMenuItem
-                    variant="destructive"
-                    onClick={() => signOut({ callbackUrl: "/sign-in" })}
-                  >
-                    Logout
-                  </DropdownMenuItem>
+                  <form action={logoutAction}>
+                    <DropdownMenuItem
+                      variant="destructive"
+                      disabled={isLoggingOut}
+                      nativeButton={false}
+                      render={
+                        <button
+                          type="submit"
+                          disabled={isLoggingOut}
+                          className="w-full"
+                          onClick={() => setIsLoggingOut(true)}
+                        />
+                      }
+                    >
+                      {isLoggingOut ? "Logging out..." : "Logout"}
+                    </DropdownMenuItem>
+                  </form>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>

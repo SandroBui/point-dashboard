@@ -49,6 +49,9 @@ async function exchangeGoogleIdToken(idToken: string): Promise<string> {
 }
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  // Required on Vercel/staging so Auth.js trusts the Host header
+  // (otherwise sign-in/sign-out CSRF can fail when AUTH_URL mismatches).
+  trustHost: true,
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID,
