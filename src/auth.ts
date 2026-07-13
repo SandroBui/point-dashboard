@@ -52,6 +52,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   // Required on Vercel/staging so Auth.js trusts the Host header
   // (otherwise sign-in/sign-out CSRF can fail when AUTH_URL mismatches).
   trustHost: true,
+  // Keep cookie names consistent on HTTPS deploys even if AUTH_URL is wrongly
+  // set to http://localhost (otherwise signOut clears the wrong cookie).
+  useSecureCookies:
+    process.env.VERCEL === "1" || process.env.NODE_ENV === "production",
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID,
@@ -70,7 +74,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     signIn: "/sign-in",
   },
   callbacks: {
-    async jwt({ token, account }) {
+    authorized({ auth }) {
+      // Used by Auth.js middleware edge cases — require a real user email.
+      return Boolean(auth?.user?.email);
+    },
+    async jwt({ token, account, profile }) {
       // Only runs on the initial OAuth sign-in (when `account` is present).
       // Subsequent session reads reuse the JWT — no re-exchange.
       if (account) {
@@ -83,10 +91,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           );
         }
         token.accessToken = await exchangeGoogleIdToken(account.id_token);
+        if (profile?.email) {
+          token.email = profile.email;
+        }
       }
       return token;
     },
     async session({ session, token }) {
+      // Drop hollow sessions so UI/middleware treat the user as signed out.
+      if (!token.email && !session.user?.email) {
+        return { ...session, user: undefined, accessToken: undefined };
+      }
       session.accessToken =
         typeof token.accessToken === "string" ? token.accessToken : undefined;
       return session;

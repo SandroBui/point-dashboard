@@ -10,11 +10,9 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
-import { useSession } from "next-auth/react";
-import { logoutAction } from "@/app/actions/auth";
+import { signOut, useSession } from "next-auth/react";
 import { SidebarContent } from "./sidebar-content";
 import { navGroups } from "@/constants/dashboard";
 import { ModeToggle } from "../mode-toggle";
@@ -28,12 +26,54 @@ function getActiveTitle(pathname: string) {
   return "Dashboard";
 }
 
+function getInitials(name?: string | null) {
+  if (!name?.trim()) return "?";
+  return name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
+}
+
+async function performLogout() {
+  // 1) Best-effort clear cookies via a fast route (does not call Auth.js signOut,
+  //    which can hang on staging when AUTH_URL points at localhost).
+  try {
+    await Promise.race([
+      fetch("/api/logout", { method: "POST", credentials: "same-origin" }),
+      new Promise((resolve) => setTimeout(resolve, 1500)),
+    ]);
+  } catch {
+    // ignore
+  }
+
+  // 2) Best-effort Auth.js client signOut, with a hard timeout.
+  try {
+    await Promise.race([
+      signOut({ redirect: false }),
+      new Promise((resolve) => setTimeout(resolve, 1500)),
+    ]);
+  } catch {
+    // ignore
+  }
+
+  // 3) Always hard-navigate so the UI can never stay stuck on "Logging out...".
+  window.location.assign("/sign-in");
+}
+
 function DashboardShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [isLoggingOut, setIsLoggingOut] = React.useState(false);
   const title = getActiveTitle(pathname);
   const { data: session, status: sessionStatus } = useSession();
+
+  const handleLogout = () => {
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+    void performLogout();
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -82,9 +122,11 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
                       <Avatar className="w-8 h-8">
                         <AvatarImage
                           src={session?.user?.image ?? ""}
-                          alt="Admin User"
+                          alt={session?.user?.name ?? "User"}
                         />
-                        <AvatarFallback>{session?.user?.name}</AvatarFallback>
+                        <AvatarFallback>
+                          {getInitials(session?.user?.name)}
+                        </AvatarFallback>
                       </Avatar>
                       <div className="text-left hidden sm:block">
                         <p className="text-sm font-medium text-foreground">
@@ -100,30 +142,14 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
                   )}
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
-                  {/* <DropdownMenuItem>
-                    <span>Profile</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <span>Settings</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator /> */}
-                  <form action={logoutAction}>
-                    <DropdownMenuItem
-                      variant="destructive"
-                      disabled={isLoggingOut}
-                      nativeButton={false}
-                      render={
-                        <button
-                          type="submit"
-                          disabled={isLoggingOut}
-                          className="w-full"
-                          onClick={() => setIsLoggingOut(true)}
-                        />
-                      }
-                    >
-                      {isLoggingOut ? "Logging out..." : "Logout"}
-                    </DropdownMenuItem>
-                  </form>
+                  <button
+                    type="button"
+                    disabled={isLoggingOut}
+                    onClick={handleLogout}
+                    className="relative flex w-full cursor-default items-center rounded-md px-1.5 py-1 text-sm text-destructive outline-hidden select-none hover:bg-destructive/10 focus:bg-destructive/10 disabled:pointer-events-none disabled:opacity-50"
+                  >
+                    {isLoggingOut ? "Logging out..." : "Logout"}
+                  </button>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
