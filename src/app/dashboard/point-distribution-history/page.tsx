@@ -1,6 +1,6 @@
 "use client";
 
-import { Database, Download, Loader2 } from "lucide-react";
+import { Database, Download, Loader2, MoreHorizontal } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -43,6 +43,15 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import useGetFilter from "@/hooks/useGetFilter";
+
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+import Link from "next/link";
 
 const itemsSelectRow = ROW_PER_PAGE.map((item) => ({
   label: `${item.toString()}`,
@@ -121,12 +130,13 @@ export default function PointDistributionHistoryPage() {
                 <TableHead>Partner</TableHead>
                 <TableHead className="text-right">Points</TableHead>
                 <TableHead>Created At</TableHead>
+                <TableHead className="w-18 text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody isLoading={isLoadingHistory} skeletonRows={limit}>
               {(!history?.data || history?.data?.length === 0) && (
                 <TableRow>
-                  <TableCell colSpan={6} className="p-8">
+                  <TableCell colSpan={7} className="p-8">
                     <Empty className="mx-auto max-w-xl">
                       <EmptyHeader>
                         <EmptyMedia variant="icon">
@@ -169,6 +179,30 @@ export default function PointDistributionHistoryPage() {
                         parseUTCStringToLocalDate(attributes.created_at),
                         "MMM dd, yyyy HH:mm",
                       )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger
+                          render={
+                            <Button
+                              variant="ghost"
+                              size="icon-sm"
+                              aria-label="More actions"
+                            >
+                              <MoreHorizontal className="size-4" />
+                            </Button>
+                          }
+                        />
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem>
+                            <Link
+                              href={`/dashboard/point-distribution-history/${id}`}
+                            >
+                              View Details
+                            </Link>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))}

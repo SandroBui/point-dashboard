@@ -3,6 +3,7 @@ export type PartnerPointAttributes = {
   slug: string;
   vault_id: string | null;
   vault_name: string | null;
+  note: string | null;
   is_active: boolean;
   is_exposure: boolean;
   created_at: string;
@@ -54,6 +55,7 @@ export type PartnerPointInput = {
   name: string;
   slug: string;
   vault_id?: string | null;
+  note?: string | null;
   is_active?: boolean;
   is_exposure?: boolean;
 };

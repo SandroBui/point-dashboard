@@ -35,7 +35,8 @@ export function SidebarContent({
             </div>
             <div className="space-y-1">
               {group.items.map((item) => {
-                const active = pathname.includes(item.href);
+                const pathName = pathname.split("/", 3);
+                const active = `/${pathName[1]}/${pathName[2]}` === item.href;
                 const Icon = item.icon;
                 return (
                   <Link

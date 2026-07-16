@@ -32,6 +32,7 @@ export const getUserCampaignPointHistory = async (
       "filter[vault_id]": filters.vaultId,
       "filter[from_time]": filters.dateFrom,
       "filter[to_time]": filters.dateTo,
+      "filter[distribution_id]": filters.distributionId,
       sort,
     })}`,
   );

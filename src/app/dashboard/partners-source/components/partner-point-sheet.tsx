@@ -19,6 +19,7 @@ import { SearchableSelect } from "@/components/searchable-select";
 import { createPartnerPoint, updatePartnerPoint } from "@/api/partnerPoints";
 import type { PartnerPointResource } from "@/types/partnerPoint";
 import type { FilterVaultResource } from "@/types/filters";
+import { Textarea } from "@/components/ui/textarea";
 
 const NO_VAULT = "none";
 
@@ -44,6 +45,7 @@ export const PartnerPointSheet = ({
   const [vaultId, setVaultId] = useState<string>(NO_VAULT);
   const [isActive, setIsActive] = useState(true);
   const [isExposure, setIsExposure] = useState(false);
+  const [note, setNote] = useState("");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -58,12 +60,14 @@ export const PartnerPointSheet = ({
       setVaultId(a.vault_id ?? NO_VAULT);
       setIsActive(a.is_active);
       setIsExposure(a.is_exposure);
+      setNote(a.note ?? "");
     } else {
       setName("");
       setSlug("");
       setVaultId(NO_VAULT);
       setIsActive(true);
       setIsExposure(false);
+      setNote("");
     }
   }, [open, partnerPoint]);
 
@@ -87,6 +91,7 @@ export const PartnerPointSheet = ({
       vault_id: vaultId === NO_VAULT ? null : vaultId,
       is_active: isActive,
       is_exposure: isExposure,
+      note,
     };
 
     try {
@@ -157,8 +162,23 @@ export const PartnerPointSheet = ({
             />
           </Field>
 
+          <Field className="lg:col-span-2">
+            <FieldLabel className="text-xs font-medium text-muted-foreground">
+              Note
+            </FieldLabel>
+            <Textarea
+              placeholder="Note something..."
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              disabled={isSubmitting}
+            />
+          </Field>
+
           <Field orientation="horizontal" className="justify-between">
-            <FieldLabel htmlFor="pp-active" className="flex-col items-start gap-0.5">
+            <FieldLabel
+              htmlFor="pp-active"
+              className="flex-col items-start gap-0.5"
+            >
               Active
               <span className="text-xs font-normal text-muted-foreground">
                 Whether this partner point is active.

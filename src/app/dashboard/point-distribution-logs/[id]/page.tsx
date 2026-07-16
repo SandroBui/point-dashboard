@@ -45,7 +45,10 @@ export default function PointDistributionLogDetailPage() {
           <p className="mt-1 text-sm text-muted-foreground">View log details</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline" onClick={() => router.back()}>
+          <Button
+            variant="outline"
+            onClick={() => router.push("/dashboard/point-distribution-logs")}
+          >
             <ArrowLeft className="size-4" />
             Back
           </Button>

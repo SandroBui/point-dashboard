@@ -1,18 +1,15 @@
 "use client";
 
-import { ArrowLeft, Pencil, Copy, Database } from "lucide-react";
+import { ArrowLeft, Copy, Database } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import useSWR from "swr";
 import { format } from "date-fns";
 
-import { getCampaignDetail } from "@/api/campaigns";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Skeleton } from "@/components/ui/skeleton";
 import { parseUTCStringToLocalDate } from "@/lib/date";
-import { CampaignStatus } from "@/constants/campaign";
 import useGetPaginationTokens from "@/hooks/useGetPaginationTokens";
 import { useState } from "react";
 import { copyTextToClipboard, truncateAddress } from "@/lib/string";
@@ -60,7 +57,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ROW_PER_PAGE } from "@/constants/dashboard";
-import { getUserCampaignPointsByCampaignId } from "@/api/userCampaignsPoints";
+import { getPointDistributionHistoryDetail } from "@/api/pointDistributionHistory";
+import { getUserCampaignPointHistory } from "@/api/userCampaignPointHistory";
 
 const itemsSelectRow = ROW_PER_PAGE.map((item) => ({
   label: item,
@@ -73,33 +71,32 @@ export default function CampaignDetailPage() {
   const id = params?.id;
 
   const {
-    data: campaign,
-    isLoading,
-    error,
-  } = useSWR(id ? ["campaign-detail", id] : null, ([, campaignId]) =>
-    getCampaignDetail(campaignId),
+    data: pointDistributionHistoryDetail,
+    isLoading: isLoadingPointDistributionHistoryDetail,
+    error: errorPointDistributionHistoryDetail,
+  } = useSWR(id ? ["point-distribution-history-detail", id] : null, () =>
+    getPointDistributionHistoryDetail(id),
   );
 
-  const attrs = campaign?.data?.attributes;
+  const attrs = pointDistributionHistoryDetail?.data?.attributes;
 
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(ROW_PER_PAGE[1]);
 
-  const { data: campaignUserPoints, isLoading: campaignUserPointsLoading } =
-    useSWR(
-      id ? ["campaign-user-points", id, page, limit] : null,
-      ([, campaignId]) =>
-        getUserCampaignPointsByCampaignId(
-          page,
-          limit,
-          campaignId,
-          "-percentage",
-        ),
-    );
-
   const handleOnchangePage = (newPage: number) => {
     setPage(Math.min(Math.max(newPage, 1), totalPages));
   };
+
+  const {
+    data: userDistributionHistory,
+    isLoading: isLoadingUserDistributionHistory,
+  } = useSWR(
+    id ? ["user-campaign-point-history-detail", id, page, limit] : null,
+    () =>
+      getUserCampaignPointHistory(page, limit, {
+        distributionId: id,
+      }),
+  );
 
   const handleNextPage = () => {
     setPage((prev) => Math.min(prev + 1, totalPages));
@@ -114,7 +111,10 @@ export default function CampaignDetailPage() {
     setPage(1);
   };
 
-  const totalPages = Math.max(1, campaignUserPoints?.meta?.total_pages ?? 1);
+  const totalPages = Math.max(
+    1,
+    userDistributionHistory?.meta?.total_pages ?? 1,
+  );
   const canGoPrev = page > 1;
   const canGoNext = page < totalPages;
   const paginationTokens = useGetPaginationTokens(page, totalPages);
@@ -138,26 +138,22 @@ export default function CampaignDetailPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
-            {isLoading ? "Campaign" : (attrs?.name ?? "Campaign")}
+            {isLoadingPointDistributionHistoryDetail
+              ? "Point Distribution History"
+              : (pointDistributionHistoryDetail?.data?.id ??
+                "Point Distribution History")}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            View campaign details
+            View point distribution history details
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button
             variant="outline"
-            onClick={() => router.push("/dashboard/campaigns")}
+            onClick={() => router.push("/dashboard/point-distribution-history")}
           >
             <ArrowLeft className="size-4" />
             Back
-          </Button>
-          <Button
-            onClick={() => router.push(`/dashboard/campaigns/${id}/edit`)}
-            disabled={!id}
-          >
-            <Pencil className="size-4" />
-            Edit
           </Button>
         </div>
       </div>
@@ -165,59 +161,54 @@ export default function CampaignDetailPage() {
       <Card>
         <CardHeader className="pb-0">
           <CardTitle className="text-sm font-semibold text-muted-foreground">
-            Campaign Information
+            Point Distribution History Information
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-4">
-          {error ? (
-            <div className="text-sm text-destructive">{error.message}</div>
+          {errorPointDistributionHistoryDetail ? (
+            <div className="text-sm text-destructive">
+              {errorPointDistributionHistoryDetail.message}
+            </div>
           ) : (
             <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               <Field className="lg:col-span-1">
-                <FieldLabel className="font-medium">Status</FieldLabel>
-                {isLoading ? (
-                  <Skeleton className="h-8" />
-                ) : (
-                  <div>
-                    <Badge
-                      className="w-fit capitalize"
-                      variant={
-                        CampaignStatus.Active === attrs?.status
-                          ? "success"
-                          : "muted"
-                      }
-                    >
-                      {attrs?.status ?? "-"}
-                    </Badge>
-                  </div>
-                )}
-              </Field>
-
-              <Field className="lg:col-span-1">
-                <FieldLabel className="font-medium">Pool Address</FieldLabel>
-                {isLoading ? (
+                <FieldLabel className="font-medium">Campaign</FieldLabel>
+                {isLoadingPointDistributionHistoryDetail ? (
                   <Skeleton className="h-8" />
                 ) : (
                   <div className="text-sm text-muted-foreground break-all">
-                    {attrs?.pool_address ?? "-"}
+                    {attrs?.campaign ?? "-"}
                   </div>
                 )}
               </Field>
 
               <Field className="lg:col-span-1">
                 <FieldLabel className="font-medium">Partner</FieldLabel>
-                {isLoading ? (
+                {isLoadingPointDistributionHistoryDetail ? (
                   <Skeleton className="h-8" />
                 ) : (
                   <div className="text-sm text-muted-foreground">
-                    {attrs?.partner_name ?? attrs?.partner_slug ?? "-"}
+                    {attrs?.partner ?? "-"}
+                  </div>
+                )}
+              </Field>
+
+              <Field className="lg:col-span-1">
+                <FieldLabel className="font-medium">Point</FieldLabel>
+                {isLoadingPointDistributionHistoryDetail ? (
+                  <Skeleton className="h-8" />
+                ) : (
+                  <div className="text-sm text-muted-foreground">
+                    {attrs?.point
+                      ? withCommas(toFixedNumber(attrs.point, 6))
+                      : "-"}
                   </div>
                 )}
               </Field>
 
               <Field className="lg:col-span-1">
                 <FieldLabel className="font-medium">Vault</FieldLabel>
-                {isLoading ? (
+                {isLoadingPointDistributionHistoryDetail ? (
                   <Skeleton className="h-8" />
                 ) : (
                   <div className="text-sm text-muted-foreground">
@@ -227,101 +218,18 @@ export default function CampaignDetailPage() {
               </Field>
 
               <Field className="lg:col-span-1">
-                <FieldLabel className="font-medium">Point Type</FieldLabel>
-                {isLoading ? (
+                <FieldLabel className="font-medium">Created Date</FieldLabel>
+                {isLoadingPointDistributionHistoryDetail ? (
                   <Skeleton className="h-8" />
                 ) : (
                   <div className="text-sm text-muted-foreground">
-                    {attrs?.point_type_name ?? attrs?.point_type_slug ?? "-"}
-                  </div>
-                )}
-              </Field>
-
-              <Field className="lg:col-span-1">
-                <FieldLabel className="font-medium">Multiplier</FieldLabel>
-                {isLoading ? (
-                  <Skeleton className="h-8" />
-                ) : (
-                  <div className="text-sm text-muted-foreground">
-                    {attrs?.multiplier ?? "-"}
-                  </div>
-                )}
-              </Field>
-
-              <Field className="lg:col-span-1">
-                <FieldLabel className="font-medium">Start Date</FieldLabel>
-                {isLoading ? (
-                  <Skeleton className="h-8" />
-                ) : (
-                  <div className="text-sm text-muted-foreground">
-                    {attrs?.start_date
+                    {attrs?.created_at
                       ? format(
-                          parseUTCStringToLocalDate(attrs.start_date),
+                          parseUTCStringToLocalDate(attrs.created_at),
                           "MMM dd, yyyy",
                         )
                       : "-"}
                   </div>
-                )}
-              </Field>
-
-              <Field className="lg:col-span-1">
-                <FieldLabel className="font-medium">End Date</FieldLabel>
-                {isLoading ? (
-                  <Skeleton className="h-8" />
-                ) : (
-                  <div className="text-sm text-muted-foreground">
-                    {attrs?.end_date
-                      ? format(
-                          parseUTCStringToLocalDate(attrs.end_date),
-                          "MMM dd, yyyy",
-                        )
-                      : "Present"}
-                  </div>
-                )}
-              </Field>
-
-              <Field className="lg:col-span-2">
-                <FieldLabel className="font-medium">Description</FieldLabel>
-                {isLoading ? (
-                  <Skeleton className="h-16" />
-                ) : (
-                  <div className="text-sm text-muted-foreground whitespace-pre-wrap">
-                    {attrs?.description ?? "-"}
-                  </div>
-                )}
-              </Field>
-
-              <Field className="lg:col-span-2">
-                <FieldLabel className="font-medium">Tags</FieldLabel>
-                {isLoading ? (
-                  <Skeleton className="h-8" />
-                ) : attrs?.tags?.length ? (
-                  <div className="flex flex-wrap gap-1.5">
-                    {attrs.tags.map((tag) => (
-                      <Badge key={tag} variant="secondary">
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-sm text-muted-foreground">-</div>
-                )}
-              </Field>
-
-              <Field className="lg:col-span-2">
-                <FieldLabel className="font-medium">Vault Reward</FieldLabel>
-                {isLoading ? (
-                  <Skeleton className="h-8" />
-                ) : attrs?.vault_reward?.length ? (
-                  <div className="flex flex-wrap gap-1.5">
-                    {attrs.vault_reward.map((tag) => (
-                      <Badge key={tag} variant="secondary">
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-sm text-muted-foreground">-</div>
                 )}
               </Field>
             </div>
@@ -333,7 +241,7 @@ export default function CampaignDetailPage() {
         <CardHeader className="flex justify-between items-center gap-1">
           <div className="space-y-1">
             <CardTitle className="text-sm font-semibold">
-              Total {campaignUserPoints?.meta?.total ?? 0} users
+              Total {userDistributionHistory?.meta?.total ?? 0} users
             </CardTitle>
           </div>
         </CardHeader>
@@ -342,19 +250,19 @@ export default function CampaignDetailPage() {
             <TableHeader>
               <TableRow>
                 <TableHead className="text-center">No.</TableHead>
-                <TableHead className="w-85">Wallet</TableHead>
-                <TableHead className="w-85">Total Point</TableHead>
-                <TableHead>Percentage Point</TableHead>
-                <TableHead className="w-85">Amount Shares Holding</TableHead>
-                <TableHead>Percentage Shares Holding</TableHead>
+                <TableHead className="w-45">User</TableHead>
+                <TableHead>Campaign</TableHead>
+                <TableHead>Points Delta</TableHead>
+                <TableHead>Note</TableHead>
+                <TableHead>Created At</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody
-              isLoading={campaignUserPointsLoading}
+              isLoading={isLoadingUserDistributionHistory}
               skeletonRows={limit}
             >
-              {(!campaignUserPoints?.data ||
-                campaignUserPoints?.data?.length === 0) && (
+              {(!userDistributionHistory?.data ||
+                userDistributionHistory?.data?.length === 0) && (
                 <TableRow>
                   <TableCell colSpan={6} className="p-8">
                     <Empty className="mx-auto max-w-xl">
@@ -369,84 +277,77 @@ export default function CampaignDetailPage() {
                 </TableRow>
               )}
 
-              {campaignUserPoints?.data &&
-                campaignUserPoints?.data?.length > 0 &&
-                campaignUserPoints?.data?.map(({ id, attributes }, index) => {
-                  const rowIndex = (page - 1) * limit + index + 1;
+              {userDistributionHistory?.data &&
+                userDistributionHistory?.data?.length > 0 &&
+                userDistributionHistory?.data?.map(
+                  ({ id, attributes }, index) => {
+                    const delta = Number(attributes.points_delta);
+                    const isPositive = delta >= 0;
+                    const rowIndex = (page - 1) * limit + index + 1;
 
-                  return (
-                    <TableRow key={id}>
-                      <TableCell className="text-center">{rowIndex}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <p className="truncate font-medium text-blue-400">
-                            {truncateAddress(attributes.user_address)}
-                          </p>
-                          <Tooltip
-                            open={
-                              currentAddressCopy?.address ===
-                                attributes.user_address &&
-                              currentAddressCopy?.rowIndex === rowIndex
-                            }
-                          >
-                            <TooltipTrigger
-                              render={
-                                <Copy
-                                  className="size-4 cursor-pointer"
-                                  onClick={() =>
-                                    copyAddressToClipboard(
-                                      attributes.user_address,
-                                      rowIndex,
-                                    )
-                                  }
-                                />
+                    return (
+                      <TableRow key={id}>
+                        <TableCell className="text-center">
+                          {rowIndex}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <p className="truncate font-medium text-blue-400">
+                              {truncateAddress(attributes.user)}
+                            </p>
+                            <Tooltip
+                              open={
+                                currentAddressCopy?.address ===
+                                  attributes.user &&
+                                currentAddressCopy?.rowIndex === rowIndex
                               }
-                            />
-                            <TooltipContent>
-                              <p>Address successfully copied!</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </div>
-                      </TableCell>
-
-                      <TableCell className="text-sm">
-                        {withCommas(
-                          toFixedNumber(
-                            Number(attributes.total_points) || 0,
-                            2,
-                          ),
-                        )}
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        {withCommas(
-                          toFixedNumber(
-                            Number(attributes.percentage_point) || 0,
-                            2,
-                          ),
-                        )}
-                        %
-                      </TableCell>
-
-                      <TableCell className="text-sm">
-                        {withCommas(
-                          toFixedNumber(
-                            Number(attributes.amount_shares_holding) || 0,
-                            2,
-                          ),
-                        )}
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        {withCommas(
-                          toFixedNumber(
-                            Number(attributes.percentage_shares_holding) || 0,
-                            2,
-                          ),
-                        )}
-                        %
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
+                            >
+                              <TooltipTrigger
+                                render={
+                                  <Copy
+                                    className="size-4 cursor-pointer"
+                                    onClick={() =>
+                                      copyAddressToClipboard(
+                                        attributes.user,
+                                        rowIndex,
+                                      )
+                                    }
+                                  />
+                                }
+                              />
+                              <TooltipContent>
+                                <p>Address successfully copied!</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="truncate font-medium">
+                            {attributes.campaign}
+                          </div>
+                        </TableCell>
+                        <TableCell
+                          className={cn(
+                            "text-right text-sm font-medium tabular-nums",
+                            isPositive ? "text-emerald-600" : "text-red-600",
+                          )}
+                        >
+                          {isPositive ? "+" : ""}
+                          {withCommas(toFixedNumber(delta, 6))}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {attributes.note ?? "—"}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {format(
+                            parseUTCStringToLocalDate(attributes.created_at),
+                            "MMM dd, yyyy HH:mm",
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  },
+                )}
             </TableBody>
           </Table>
 

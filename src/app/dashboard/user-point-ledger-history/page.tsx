@@ -4,6 +4,7 @@ import {
   ArrowDown,
   ArrowUp,
   ArrowUpDown,
+  Copy,
   Database,
   Download,
   Loader2,
@@ -51,6 +52,14 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import useGetFilter from "@/hooks/useGetFilter";
+import { copyTextToClipboard, truncateAddress } from "@/lib/string";
+import { useState } from "react";
+
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const itemsSelectRow = ROW_PER_PAGE.map((item) => ({
   label: `${item.toString()}`,
@@ -119,6 +128,20 @@ export default function UserCampaignPointsHistoryPage() {
   const canGoPrev = page > 1;
   const canGoNext = page < totalPages;
   const paginationTokens = useGetPaginationTokens(page, totalPages);
+
+  const [currentAddressCopy, setCurrentAddressCopy] = useState({
+    address: "",
+    rowIndex: 0,
+  });
+
+  const copyAddressToClipboard = (address: string, rowIndex: number) => {
+    copyTextToClipboard(address, () => {
+      setCurrentAddressCopy({ address, rowIndex });
+      setTimeout(() => {
+        setCurrentAddressCopy({ address: "", rowIndex: 0 });
+      }, 2000);
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -205,18 +228,39 @@ export default function UserCampaignPointsHistoryPage() {
                 history.data.map(({ id, attributes }, index) => {
                   const delta = Number(attributes.points_delta);
                   const isPositive = delta >= 0;
+                  const rowIndex = (page - 1) * limit + index + 1;
 
                   return (
                     <TableRow key={id}>
-                      <TableCell className="text-center">
-                        {(page - 1) * limit + index + 1}
-                      </TableCell>
+                      <TableCell className="text-center">{rowIndex}</TableCell>
                       <TableCell>
-                        <div
-                          className="max-w-45 truncate font-mono text-sm"
-                          title={attributes.user}
-                        >
-                          {attributes.user}
+                        <div className="flex items-center gap-2">
+                          <p className="truncate font-medium text-blue-400">
+                            {truncateAddress(attributes.user)}
+                          </p>
+                          <Tooltip
+                            open={
+                              currentAddressCopy?.address === attributes.user &&
+                              currentAddressCopy?.rowIndex === rowIndex
+                            }
+                          >
+                            <TooltipTrigger
+                              render={
+                                <Copy
+                                  className="size-4 cursor-pointer"
+                                  onClick={() =>
+                                    copyAddressToClipboard(
+                                      attributes.user,
+                                      rowIndex,
+                                    )
+                                  }
+                                />
+                              }
+                            />
+                            <TooltipContent>
+                              <p>Address successfully copied!</p>
+                            </TooltipContent>
+                          </Tooltip>
                         </div>
                       </TableCell>
                       <TableCell>

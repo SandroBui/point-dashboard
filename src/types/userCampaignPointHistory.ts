@@ -32,4 +32,5 @@ export type UserCampaignPointHistoryFilters = {
   vaultId?: string;
   dateFrom?: string;
   dateTo?: string;
+  distributionId?: string;
 };

@@ -132,6 +132,7 @@ export default function PartnerPointsPage() {
                 <TableHead className="w-64">Name</TableHead>
                 <TableHead>Slug</TableHead>
                 <TableHead>Vault</TableHead>
+                <TableHead className="w-100">Note</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Exposure</TableHead>
                 <TableHead>Updated</TableHead>
@@ -144,7 +145,7 @@ export default function PartnerPointsPage() {
             >
               {(!partnerPoints?.data || partnerPoints?.data?.length === 0) && (
                 <TableRow>
-                  <TableCell colSpan={8} className="p-8">
+                  <TableCell colSpan={9} className="p-8">
                     <Empty className="mx-auto max-w-xl">
                       <EmptyHeader>
                         <EmptyMedia variant="icon">
@@ -176,6 +177,9 @@ export default function PartnerPointsPage() {
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
                         {attributes.vault_name ?? "-"}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground whitespace-pre-wrap wrap-break-word">
+                        {attributes.note ?? "-"}
                       </TableCell>
                       <TableCell>
                         <Badge

@@ -29,13 +29,6 @@ export const navGroups: NavGroup[] = [
         href: "/dashboard/partners-source",
         icon: Building2,
       },
-      // {
-      //     title: "Campaign Templates",
-      //     href: "/dashboard/campaign-templates",
-      //     icon: FileText,
-      // },
-      // { title: "Vaults", href: "/dashboard/vaults", icon: Vault },
-      // { title: "Partners", href: "/dashboard/partners", icon: Building2 },
     ],
   },
   {
@@ -62,24 +55,22 @@ export const navGroups: NavGroup[] = [
         icon: FileText,
       },
       {
-        title: "Point Distribution Logs",
-        href: "/dashboard/point-distribution-logs",
-        icon: LogsIcon,
-      },
-      {
         title: "Token Distribution History",
         href: "/dashboard/token-distribution-history",
         icon: FileText,
       },
     ],
   },
-  // {
-  //     title: "System",
-  //     items: [
-  //         { title: "Settings", href: "/dashboard/settings", icon: Settings },
-  //         { title: "Audit Logs", href: "/dashboard/audit-logs", icon: Shield },
-  //     ],
-  // },
+  {
+    title: "System",
+    items: [
+      {
+        title: "Point Distribution Logs",
+        href: "/dashboard/point-distribution-logs",
+        icon: LogsIcon,
+      },
+    ],
+  },
 ];
 
 export const ROW_PER_PAGE = [5, 10, 20, 50];

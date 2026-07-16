@@ -2,6 +2,7 @@ import apiFetch from "@/lib/apiFetch";
 import { parseFilename } from "@/lib/download";
 import type {
   PointDistributionHistoryFilters,
+  PointDistributionHistoryResource,
   PointDistributionHistoryResponse,
 } from "@/types/pointDistributionHistory";
 import qs from "query-string";
@@ -51,4 +52,11 @@ export const exportPointDistributionHistory = async (
     "point-distribution-history.csv";
 
   return { blob, filename };
+};
+
+export const getPointDistributionHistoryDetail = async (id: string) => {
+  const res = await apiFetch<{
+    data: PointDistributionHistoryResource;
+  }>(`/api/v1/admin/point-distribution-history/${id}`);
+  return res;
 };
