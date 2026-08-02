@@ -324,6 +324,26 @@ export default function CampaignDetailPage() {
                   <div className="text-sm text-muted-foreground">-</div>
                 )}
               </Field>
+
+              <Field className="lg:col-span-1">
+                <FieldLabel className="font-medium">
+                  Last Distribution Time
+                </FieldLabel>
+                {isLoading ? (
+                  <Skeleton className="h-8" />
+                ) : (
+                  <div className="text-sm text-muted-foreground">
+                    {attrs?.last_distribution_time
+                      ? format(
+                          parseUTCStringToLocalDate(
+                            attrs.last_distribution_time,
+                          ),
+                          "MMM dd, yyyy",
+                        )
+                      : "-"}
+                  </div>
+                )}
+              </Field>
             </div>
           )}
         </CardContent>

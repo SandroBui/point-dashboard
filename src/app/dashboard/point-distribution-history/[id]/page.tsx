@@ -138,14 +138,20 @@ export default function CampaignDetailPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
-            {isLoadingPointDistributionHistoryDetail
-              ? "Point Distribution History"
-              : (pointDistributionHistoryDetail?.data?.id ??
-                "Point Distribution History")}
+            {isLoadingPointDistributionHistoryDetail ? (
+              <Skeleton className="h-8" />
+            ) : (
+              <>
+                Distribution At{" "}
+                {attrs?.created_at
+                  ? format(
+                      parseUTCStringToLocalDate(attrs.created_at),
+                      "dd/MM/yyyy hh:mm a",
+                    )
+                  : "-"}
+              </>
+            )}
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            View point distribution history details
-          </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button
@@ -216,22 +222,6 @@ export default function CampaignDetailPage() {
                   </div>
                 )}
               </Field>
-
-              <Field className="lg:col-span-1">
-                <FieldLabel className="font-medium">Created Date</FieldLabel>
-                {isLoadingPointDistributionHistoryDetail ? (
-                  <Skeleton className="h-8" />
-                ) : (
-                  <div className="text-sm text-muted-foreground">
-                    {attrs?.created_at
-                      ? format(
-                          parseUTCStringToLocalDate(attrs.created_at),
-                          "MMM dd, yyyy",
-                        )
-                      : "-"}
-                  </div>
-                )}
-              </Field>
             </div>
           )}
         </CardContent>
@@ -252,8 +242,10 @@ export default function CampaignDetailPage() {
                 <TableHead className="text-center">No.</TableHead>
                 <TableHead className="w-45">User</TableHead>
                 <TableHead>Campaign</TableHead>
-                <TableHead>Points Delta</TableHead>
+                <TableHead className="text-right">Points Delta</TableHead>
                 <TableHead>Note</TableHead>
+                <TableHead className="text-right">Balance Amount</TableHead>
+                <TableHead>Balance Note</TableHead>
                 <TableHead>Created At</TableHead>
               </TableRow>
             </TableHeader>
@@ -264,7 +256,7 @@ export default function CampaignDetailPage() {
               {(!userDistributionHistory?.data ||
                 userDistributionHistory?.data?.length === 0) && (
                 <TableRow>
-                  <TableCell colSpan={6} className="p-8">
+                  <TableCell colSpan={8} className="p-8">
                     <Empty className="mx-auto max-w-xl">
                       <EmptyHeader>
                         <EmptyMedia variant="icon">
@@ -284,6 +276,11 @@ export default function CampaignDetailPage() {
                     const delta = Number(attributes.points_delta);
                     const isPositive = delta >= 0;
                     const rowIndex = (page - 1) * limit + index + 1;
+                    const balanceAmount =
+                      attributes.balance_amount != null &&
+                      attributes.balance_amount !== ""
+                        ? Number(attributes.balance_amount)
+                        : null;
 
                     return (
                       <TableRow key={id}>
@@ -337,6 +334,14 @@ export default function CampaignDetailPage() {
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
                           {attributes.note ?? "—"}
+                        </TableCell>
+                        <TableCell className="text-right text-sm font-medium tabular-nums">
+                          {balanceAmount != null && !Number.isNaN(balanceAmount)
+                            ? withCommas(toFixedNumber(balanceAmount, 6))
+                            : "—"}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {attributes.balance_note ?? "—"}
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
                           {format(

@@ -256,13 +256,14 @@ export default function CampaignsPage() {
                 <TableHead className="text-right">Users</TableHead>
                 <TableHead className="w-55">Distributed</TableHead>
                 <TableHead className="w-55">Description</TableHead>
+                <TableHead>Last Distribution</TableHead>
                 <TableHead className="w-18 text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody isLoading={isLoadingGetCampaigns} skeletonRows={limit}>
               {(!campaigns?.data || campaigns?.data?.length === 0) && (
                 <TableRow>
-                  <TableCell colSpan={11} className="p-8">
+                  <TableCell colSpan={12} className="p-8">
                     <Empty className="mx-auto max-w-xl">
                       <EmptyHeader>
                         <EmptyMedia variant="icon">
@@ -337,6 +338,16 @@ export default function CampaignsPage() {
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {attributes.description ?? "-"}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {attributes.last_distribution_time &&
+                        format(
+                          parseUTCStringToLocalDate(
+                            attributes.last_distribution_time,
+                          ),
+                          "MMM dd, yyyy",
+                        )}
+                      {"-"}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">

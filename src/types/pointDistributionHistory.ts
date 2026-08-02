@@ -3,6 +3,8 @@ export type PointDistributionHistoryAttributes = {
   campaign: string | null;
   partner: string;
   point: number;
+  balance_amount: number | null;
+  balance_note: string | null;
   created_at: string;
 };
 

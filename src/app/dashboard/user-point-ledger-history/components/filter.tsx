@@ -15,14 +15,9 @@ import type {
 } from "@/types/filters";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { format, subDays } from "date-fns";
+import { subDays } from "date-fns";
 import { type DateRange } from "react-day-picker";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
+import { DateRangePicker } from "@/components/date-range-picker";
 
 interface FilterUserCampaignPointHistoryProps {
   isLoading: boolean;
@@ -230,40 +225,11 @@ export const FilterUserCampaignPointHistory = ({
             >
               Date Range
             </FieldLabel>
-            <Popover>
-              <PopoverTrigger
-                disabled={isApplying}
-                render={
-                  <Button
-                    variant="outline"
-                    id="date-picker-range"
-                    className="justify-start px-2.5 font-normal"
-                  >
-                    {date?.from ? (
-                      date.to ? (
-                        <>
-                          {format(date.from, "LLL dd, y")} -{" "}
-                          {format(date.to, "LLL dd, y")}
-                        </>
-                      ) : (
-                        format(date.from, "LLL dd, y")
-                      )
-                    ) : (
-                      <span>Pick a date</span>
-                    )}
-                  </Button>
-                }
-              />
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="range"
-                  defaultMonth={date?.from}
-                  selected={date}
-                  onSelect={setDate}
-                  numberOfMonths={2}
-                />
-              </PopoverContent>
-            </Popover>
+            <DateRangePicker
+              date={date}
+              onDateChange={setDate}
+              disabled={isApplying}
+            />
           </Field>
         </div>
       </CardContent>

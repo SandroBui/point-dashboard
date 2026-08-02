@@ -11,7 +11,7 @@ export type CampaignAttributes = {
   multiplier: number;
   start_date: string;
   end_date: string;
-  partner_slug: string
+  partner_slug: string;
   partner_name: string;
   vault: string;
   vault_id: string;
@@ -24,6 +24,7 @@ export type CampaignAttributes = {
   created_at: string;
   updated_at: string;
   vault_reward: string[];
+  last_distribution_time: string;
 };
 
 export type CreateCampaignInput = {

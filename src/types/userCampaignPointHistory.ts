@@ -3,6 +3,8 @@ export type UserCampaignPointHistoryAttributes = {
   campaign: string;
   points_delta: string;
   note: string | null;
+  balance_amount: number | string | null;
+  balance_note: string | null;
   created_at: string;
 };
 
