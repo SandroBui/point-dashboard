@@ -88,6 +88,28 @@ function statusBadgeVariant(status: CampaignAttributes["status"]) {
   }
 }
 
+const convertStatusPartnerBadgeVariant = (status: boolean | null) => {
+  switch (status) {
+    case true:
+      return "success";
+    case false:
+      return "muted";
+    default:
+      return "muted";
+  }
+};
+
+const convertTextStatusPartner = (status: boolean | null) => {
+  switch (status) {
+    case true:
+      return "Active";
+    case false:
+      return "Inactive";
+    default:
+      return "-";
+  }
+};
+
 const itemsSelectRow = ROW_PER_PAGE.map((item) => ({
   label: item,
   value: item,
@@ -250,7 +272,8 @@ export default function CampaignsPage() {
                 <TableHead>Partner</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead>Vault</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>Campaign Status</TableHead>
+                <TableHead>Partner Status</TableHead>
                 <TableHead>Period</TableHead>
                 {/* <TableHead className="text-right">Total Points</TableHead> */}
                 <TableHead className="text-right">Users</TableHead>
@@ -263,7 +286,7 @@ export default function CampaignsPage() {
             <TableBody isLoading={isLoadingGetCampaigns} skeletonRows={limit}>
               {(!campaigns?.data || campaigns?.data?.length === 0) && (
                 <TableRow>
-                  <TableCell colSpan={12} className="p-8">
+                  <TableCell colSpan={13} className="p-8">
                     <Empty className="mx-auto max-w-xl">
                       <EmptyHeader>
                         <EmptyMedia variant="icon">
@@ -305,6 +328,16 @@ export default function CampaignsPage() {
                         className="capitalize"
                       >
                         {attributes.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={convertStatusPartnerBadgeVariant(
+                          attributes.partner_status,
+                        )}
+                        className="capitalize"
+                      >
+                        {convertTextStatusPartner(attributes.partner_status)}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">

@@ -13,7 +13,6 @@ import { Field, FieldLabel } from "@/components/ui/field";
 import { Skeleton } from "@/components/ui/skeleton";
 import { parseUTCStringToLocalDate } from "@/lib/date";
 import { CampaignStatus } from "@/constants/campaign";
-import useGetPaginationTokens from "@/hooks/useGetPaginationTokens";
 import { useState } from "react";
 import { copyTextToClipboard, truncateAddress } from "@/lib/string";
 
@@ -60,7 +59,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ROW_PER_PAGE } from "@/constants/dashboard";
-import { getUserCampaignPointsByCampaignId } from "@/api/userCampaignsPoints";
+import { CampaignUserPointsFilter } from "../components/campaign-user-points-filter";
+import useGetCampaignUserPointsByCampaignId from "@/hooks/useGetCampaignUserPointsByCampaignId";
 
 const itemsSelectRow = ROW_PER_PAGE.map((item) => ({
   label: item,
@@ -82,42 +82,23 @@ export default function CampaignDetailPage() {
 
   const attrs = campaign?.data?.attributes;
 
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(ROW_PER_PAGE[1]);
-
-  const { data: campaignUserPoints, isLoading: campaignUserPointsLoading } =
-    useSWR(
-      id ? ["campaign-user-points", id, page, limit] : null,
-      ([, campaignId]) =>
-        getUserCampaignPointsByCampaignId(
-          page,
-          limit,
-          campaignId,
-          "-percentage",
-        ),
-    );
-
-  const handleOnchangePage = (newPage: number) => {
-    setPage(Math.min(Math.max(newPage, 1), totalPages));
-  };
-
-  const handleNextPage = () => {
-    setPage((prev) => Math.min(prev + 1, totalPages));
-  };
-
-  const handlePreviousPage = () => {
-    setPage((prev) => Math.max(prev - 1, 1));
-  };
-
-  const handleChangeLimit = (newLimit: number) => {
-    setLimit(newLimit);
-    setPage(1);
-  };
-
-  const totalPages = Math.max(1, campaignUserPoints?.meta?.total_pages ?? 1);
-  const canGoPrev = page > 1;
-  const canGoNext = page < totalPages;
-  const paginationTokens = useGetPaginationTokens(page, totalPages);
+  const {
+    page,
+    limit,
+    search,
+    setSearch,
+    applySearch,
+    campaignUserPoints,
+    isLoadingCampaignUserPoints,
+    totalPages,
+    canGoPrev,
+    canGoNext,
+    paginationTokens,
+    handleOnchangePage,
+    handleChangeLimit,
+    handleNextPage,
+    handlePreviousPage,
+  } = useGetCampaignUserPointsByCampaignId(id);
 
   const [currentAddressCopy, setCurrentAddressCopy] = useState({
     address: "",
@@ -356,6 +337,12 @@ export default function CampaignDetailPage() {
               Total {campaignUserPoints?.meta?.total ?? 0} users
             </CardTitle>
           </div>
+          <CampaignUserPointsFilter
+            search={search}
+            isApplying={isLoadingCampaignUserPoints}
+            onSearchChange={setSearch}
+            onSearchApply={applySearch}
+          />
         </CardHeader>
         <CardContent className="pt-0">
           <Table className="min-w-262.5">
@@ -370,7 +357,7 @@ export default function CampaignDetailPage() {
               </TableRow>
             </TableHeader>
             <TableBody
-              isLoading={campaignUserPointsLoading}
+              isLoading={isLoadingCampaignUserPoints}
               skeletonRows={limit}
             >
               {(!campaignUserPoints?.data ||

@@ -25,6 +25,7 @@ export type CampaignAttributes = {
   updated_at: string;
   vault_reward: string[];
   last_distribution_time: string;
+  partner_status: boolean | null;
 };
 
 export type CreateCampaignInput = {

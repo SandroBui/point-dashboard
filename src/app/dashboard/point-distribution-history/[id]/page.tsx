@@ -10,7 +10,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Skeleton } from "@/components/ui/skeleton";
 import { parseUTCStringToLocalDate } from "@/lib/date";
-import useGetPaginationTokens from "@/hooks/useGetPaginationTokens";
 import { useState } from "react";
 import { copyTextToClipboard, truncateAddress } from "@/lib/string";
 
@@ -58,7 +57,8 @@ import {
 } from "@/components/ui/select";
 import { ROW_PER_PAGE } from "@/constants/dashboard";
 import { getPointDistributionHistoryDetail } from "@/api/pointDistributionHistory";
-import { getUserCampaignPointHistory } from "@/api/userCampaignPointHistory";
+import { DistributionHistoryUsersFilter } from "../components/distribution-history-users-filter";
+import useGetPointDistributionHistoryUsers from "@/hooks/useGetPointDistributionHistoryUsers";
 
 const itemsSelectRow = ROW_PER_PAGE.map((item) => ({
   label: item,
@@ -80,44 +80,23 @@ export default function CampaignDetailPage() {
 
   const attrs = pointDistributionHistoryDetail?.data?.attributes;
 
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(ROW_PER_PAGE[1]);
-
-  const handleOnchangePage = (newPage: number) => {
-    setPage(Math.min(Math.max(newPage, 1), totalPages));
-  };
-
   const {
-    data: userDistributionHistory,
-    isLoading: isLoadingUserDistributionHistory,
-  } = useSWR(
-    id ? ["user-campaign-point-history-detail", id, page, limit] : null,
-    () =>
-      getUserCampaignPointHistory(page, limit, {
-        distributionId: id,
-      }),
-  );
-
-  const handleNextPage = () => {
-    setPage((prev) => Math.min(prev + 1, totalPages));
-  };
-
-  const handlePreviousPage = () => {
-    setPage((prev) => Math.max(prev - 1, 1));
-  };
-
-  const handleChangeLimit = (newLimit: number) => {
-    setLimit(newLimit);
-    setPage(1);
-  };
-
-  const totalPages = Math.max(
-    1,
-    userDistributionHistory?.meta?.total_pages ?? 1,
-  );
-  const canGoPrev = page > 1;
-  const canGoNext = page < totalPages;
-  const paginationTokens = useGetPaginationTokens(page, totalPages);
+    page,
+    limit,
+    search,
+    setSearch,
+    applySearch,
+    userDistributionHistory,
+    isLoadingUserDistributionHistory,
+    totalPages,
+    canGoPrev,
+    canGoNext,
+    paginationTokens,
+    handleOnchangePage,
+    handleChangeLimit,
+    handleNextPage,
+    handlePreviousPage,
+  } = useGetPointDistributionHistoryUsers(id);
 
   const [currentAddressCopy, setCurrentAddressCopy] = useState({
     address: "",
@@ -234,6 +213,12 @@ export default function CampaignDetailPage() {
               Total {userDistributionHistory?.meta?.total ?? 0} users
             </CardTitle>
           </div>
+          <DistributionHistoryUsersFilter
+            search={search}
+            isApplying={isLoadingUserDistributionHistory}
+            onSearchChange={setSearch}
+            onSearchApply={applySearch}
+          />
         </CardHeader>
         <CardContent className="pt-0">
           <Table className="min-w-262.5">

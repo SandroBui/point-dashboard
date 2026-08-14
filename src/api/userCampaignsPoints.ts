@@ -104,17 +104,20 @@ export const importUserCampaignPoints = async (file: File) => {
   );
 };
 
-
 export const getUserCampaignPointsByCampaignId = async (
   page: number,
   limit: number,
   campaignId: string,
   sort?: string,
+  search?: string,
 ) =>
   await apiFetch<CampaignUserPointsResponse>(
-    `/api/v1/admin/user-campaign-points/campaigns/${campaignId}/users?${qs.stringify({
-      "page[number]": page,
-      "page[size]": limit,
-      "sort": sort,
-    })}`,
+    `/api/v1/admin/user-campaign-points/campaigns/${campaignId}/users?${qs.stringify(
+      {
+        "page[number]": page,
+        "page[size]": limit,
+        "filter[user_address]": search,
+        sort: sort,
+      },
+    )}`,
   );
